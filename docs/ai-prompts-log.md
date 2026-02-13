@@ -294,40 +294,114 @@ This repository will be used by service layer for business logic.
 
 ### Result Summary
 
-Створено клас ProjectRepository у src/core/repositories/project.repository.ts.
+- Створено клас ProjectRepository у src/core/repositories/project.repository.ts.
 
-Використано PrismaClient singleton з src/core/db/prismaClient.ts.
+- Використано PrismaClient singleton з src/core/db/prismaClient.ts.
 
-Типи TypeScript: використані Prisma-generated Project та власні інтерфейси для input.
+- Типи TypeScript: використані Prisma-generated Project та власні інтерфейси для input.
 
-Реалізовані методи:
+- Реалізовані методи:
+  - getAll() — повертає всі проекти, відсортовані за датою створення (новіші першими)
 
-getAll() — повертає всі проекти, відсортовані за датою створення (новіші першими)
+  - getById(id: string) — отримання проекту за ID або null
 
-getById(id: string) — отримання проекту за ID або null
+  - create(data) — створює новий проект з name і color
 
-create(data) — створює новий проект з name і color
+  - update(id, data) — оновлює лише надані поля (partial update)
 
-update(id, data) — оновлює лише надані поля (partial update)
+  - delete(id) — видаляє проект за ID
 
-delete(id) — видаляє проект за ID
+- Реалізовано обробку помилок Prisma для подальшого використання на сервісному рівні
 
-Реалізовано обробку помилок Prisma для подальшого використання на сервісному рівні
+- Business logic відсутній — чистий data access layer
 
-Business logic відсутній — чистий data access layer
-
-Готово для використання у сервісах та подальшої інтеграції з UI
+- Готово для використання у сервісах та подальшої інтеграції з UI
 
 ### Notes
 
-Використання partial update через conditional spreading — сучасний best practice для репозиторіїв
+- Використання partial update через conditional spreading — сучасний best practice для репозиторіїв
 
-Типізація забезпечує повну безпеку при використанні у сервісах
+- Типізація забезпечує повну безпеку при використанні у сервісах
 
-Підготовка до наступного кроку: створення TimeEntry repository
+- Підготовка до наступного кроку: створення TimeEntry repository
 
-Рекомендується після генерації додати unit-тести для CRUD методів (опційно, але добре для демонстрації професійного підходу)
+- Рекомендується після генерації додати unit-тести для CRUD методів (опційно, але добре для демонстрації професійного підходу)
 
-Всі зміни можна легко логувати через git diff для наступних кроків
+- Всі зміни можна легко логувати через git diff для наступних кроків
+
+---
+
+## [2026-02-13] — TimeEntry repository class implementation
+
+Tool: Cursor
+Model: Auto (Cursor default model selection)
+Scope: Multi-file generation
+
+### Prompt
+
+Create a repository class for TimeEntry entity using PrismaClient.
+
+Requirements:
+
+1. File: src/core/repositories/timeEntry.repository.ts
+2. Use PrismaClient singleton from src/core/db/prismaClient.ts
+3. Implement methods:
+   - getAll(): Promise<TimeEntry[]> — return all time entries ordered by startTime descending
+   - getById(id: string): Promise<TimeEntry | null> — fetch by ID
+   - create(data: { description: string; projectId: string; startTime: Date; endTime?: Date; duration?: number }): Promise<TimeEntry>
+   - update(id: string, data: { description?: string; projectId?: string; startTime?: Date; endTime?: Date; duration?: number }): Promise<TimeEntry>
+   - delete(id: string): Promise<void>
+4. Include proper TypeScript typing for inputs and outputs
+5. Ensure relations with Project are properly typed
+6. Do NOT implement service layer
+7. Ensure clean, maintainable, production-ready code
+
+### Purpose
+
+To create the TimeEntry repository layer to handle all CRUD operations on the TimeEntry model using PrismaClient.
+This repository will be used by service layer for business logic.
+The repository must support partial updates and maintain proper TypeScript typing.
+
+### Changes
+
+        modified:   docs/ai-prompts-log.md
+        modified:   src/core/repositories/timeEntry.repository.ts
+
+### Result Summary
+
+- Створено клас TimeEntryRepository у src/core/repositories/timeEntry.repository.ts.
+
+- Використано PrismaClient singleton з src/core/db/prismaClient.ts.
+
+- Реалізовані методи:
+  - getAll() — повертає всі записи часу, відсортовані за startTime у спадаючому порядку
+
+  - getById(id: string) — отримання запису за ID або null
+
+  - create(data) — створює новий запис часу з обов’язковими та опційними полями
+
+  - update(id, data) — оновлює лише надані поля (partial update)
+
+  - delete(id) — видаляє запис за ID
+
+  - listByProject(projectId) — повертає всі записи часу конкретного проекту
+
+- Типи TypeScript: використані Prisma-generated TimeEntry та власні інтерфейси для input (CreateTimeEntryData, UpdateTimeEntryData)
+
+- Відповідність шаблону ProjectRepository: чистий код, JSDoc коментарі, conditional update через spread оператор
+
+- Репозиторій готовий до використання у сервісах і забезпечує повну типізацію та зв’язки з Project
+
+### Notes
+
+- Використання listByProject дозволяє легко групувати записи по проектам для UI або звітів
+
+- Conditional spread у update() — сучасний best practice для partial update
+
+- Репозиторій повністю повторює патерн ProjectRepository → консистентність коду
+
+- Наступний крок: створення service layer для бізнес-логіки (ProjectService та TimeEntryService)
+
+- Рекомендація: додати unit-тести на CRUD методи для перевірки логіки та зв’язків
 
 ---
