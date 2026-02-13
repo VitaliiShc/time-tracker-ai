@@ -186,3 +186,74 @@ To generate a clean layered architecture for a scalable fullstack application.
 ### Notes
 
 Architecture follows clean layered principles and keeps framework adapters isolated from business logic.
+
+---
+
+## [2026-02-13] — Prisma setup for Next.js with SQLite
+
+Tool: Cursor
+Model: Auto (Cursor default model selection)
+Scope: Multi-file generation
+
+### Prompt
+
+Install and configure Prisma for this Next.js project using SQLite.
+
+Requirements:
+
+1. Initialize Prisma in the project (prisma/schema.prisma).
+2. Define the following models:
+
+- Project
+  - id: String (UUID) @id @default(uuid())
+  - name: String
+  - color: String
+  - createdAt: DateTime @default(now())
+  - updatedAt: DateTime @updatedAt
+  - timeEntries: Relation to TimeEntry[]
+
+- TimeEntry
+  - id: String (UUID) @id @default(uuid())
+  - description: String (task name)
+  - projectId: String (relation to Project)
+  - startTime: DateTime
+  - endTime: DateTime? (nullable)
+  - duration: Int (seconds)
+  - createdAt: DateTime @default(now())
+  - updatedAt: DateTime @updatedAt
+
+3. Create PrismaClient singleton in src/core/db/prismaClient.ts
+4. Ensure the setup is ready for generating repository layer next
+5. Do NOT implement business logic or services
+
+### Purpose
+
+To set up the database layer using Prisma and SQLite, with properly defined models and a PrismaClient singleton.
+This will serve as the foundation for repositories and data access.
+
+### Changes
+
+        modified:   docs/ai-prompts-log.md
+        modified:   package-lock.json
+        modified:   package.json
+        new file:   prisma.config.ts
+        modified:   prisma/schema.prisma
+
+### Result Summary
+
+- Prisma 7 встановлено та налаштовано для SQLite
+- Створено моделі Project та TimeEntry з усіма полями та зв'язками
+- Створено prisma.config.ts для datasource
+- Конфігурація PrismaClient singleton завершена
+- Prisma Client згенеровано та готовий до використання у репозиторіях
+- Схема готова для створення репозиторіїв та подальшої бізнес-логіки
+
+### Notes
+
+- Prisma 7 змінила спосіб конфігурації datasource (url перенесено у prisma.config.ts)
+- Duration зберігається в секундах для простішого обчислення часу
+- Наступний крок — створення repository layer для Project та TimeEntry
+- Використовувати PrismaClient з singleton паттерном у сервісах
+- Для тестування можна запускати `npx prisma studio` та `npx prisma migrate dev`
+
+---
