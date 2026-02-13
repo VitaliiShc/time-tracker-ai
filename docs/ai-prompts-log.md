@@ -257,3 +257,77 @@ This will serve as the foundation for repositories and data access.
 - Для тестування можна запускати `npx prisma studio` та `npx prisma migrate dev`
 
 ---
+
+## [2026-02-13] — Create a Project Repository using PrismaClient
+
+Tool: Cursor
+Model: Auto (Cursor default model selection)
+Scope: Multi-file generation
+
+### Prompt
+
+Create a repository class for Project entity using PrismaClient.
+
+Requirements:
+
+1. File: src/core/repositories/project.repository.ts
+2. Use PrismaClient singleton from src/core/db/prismaClient.ts
+3. Implement methods:
+   - getAll(): Promise<Project[]>
+   - getById(id: string): Promise<Project | null>
+   - create(data: { name: string; color: string }): Promise<Project>
+   - update(id: string, data: { name?: string; color?: string }): Promise<Project>
+   - delete(id: string): Promise<void>
+4. Include proper TypeScript typing for inputs and outputs
+5. Do NOT implement business logic or service layer
+6. Ensure clean, maintainable, production-ready code
+
+### Purpose
+
+To create the Project repository layer to handle all CRUD operations on the Project model using PrismaClient.
+This repository will be used by service layer for business logic.
+
+### Changes
+
+        modified:   docs/ai-prompts-log.md
+        modified:   src/core/repositories/project.repository.ts
+
+### Result Summary
+
+Створено клас ProjectRepository у src/core/repositories/project.repository.ts.
+
+Використано PrismaClient singleton з src/core/db/prismaClient.ts.
+
+Типи TypeScript: використані Prisma-generated Project та власні інтерфейси для input.
+
+Реалізовані методи:
+
+getAll() — повертає всі проекти, відсортовані за датою створення (новіші першими)
+
+getById(id: string) — отримання проекту за ID або null
+
+create(data) — створює новий проект з name і color
+
+update(id, data) — оновлює лише надані поля (partial update)
+
+delete(id) — видаляє проект за ID
+
+Реалізовано обробку помилок Prisma для подальшого використання на сервісному рівні
+
+Business logic відсутній — чистий data access layer
+
+Готово для використання у сервісах та подальшої інтеграції з UI
+
+### Notes
+
+Використання partial update через conditional spreading — сучасний best practice для репозиторіїв
+
+Типізація забезпечує повну безпеку при використанні у сервісах
+
+Підготовка до наступного кроку: створення TimeEntry repository
+
+Рекомендується після генерації додати unit-тести для CRUD методів (опційно, але добре для демонстрації професійного підходу)
+
+Всі зміни можна легко логувати через git diff для наступних кроків
+
+---

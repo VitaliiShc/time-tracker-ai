@@ -1,43 +1,74 @@
-import type { Project } from '../domain/project';
+import { prisma } from '../db/prismaClient';
+import type { Project } from '@prisma/client';
 
-export interface ProjectRepository {
-  getById(id: string): Promise<Project | null>;
-  list(): Promise<Project[]>;
-  create(input: Pick<Project, 'name' | 'description'>): Promise<Project>;
-  archive(id: string): Promise<Project>;
+export interface CreateProjectData {
+  name: string;
+  color: string;
 }
 
-// Placeholder implementation; actual Prisma logic will be added later.
-export class PrismaProjectRepository implements ProjectRepository {
-  async getById(_id: string): Promise<Project | null> {
-    return null;
-  }
-
-  async list(): Promise<Project[]> {
-    return [];
-  }
-
-  async create(input: Pick<Project, 'name' | 'description'>): Promise<Project> {
-    const now = new Date();
-    return {
-      id: 'placeholder',
-      isArchived: false,
-      createdAt: now,
-      updatedAt: now,
-      ...input,
-    };
-  }
-
-  async archive(id: string): Promise<Project> {
-    const now = new Date();
-    return {
-      id,
-      name: 'placeholder',
-      description: undefined,
-      isArchived: true,
-      createdAt: now,
-      updatedAt: now,
-    };
-  }
+export interface UpdateProjectData {
+  name?: string;
+  color?: string;
 }
 
+export class ProjectRepository {
+  /**
+   * Get all projects
+   */
+  async getAll(): Promise<Project[]> {
+    return prisma.project.findMany({
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+  }
+
+  /**
+   * Get a project by ID
+   */
+  async getById(id: string): Promise<Project | null> {
+    return prisma.project.findUnique({
+      where: {
+        id,
+      },
+    });
+  }
+
+  /**
+   * Create a new project
+   */
+  async create(data: CreateProjectData): Promise<Project> {
+    return prisma.project.create({
+      data: {
+        name: data.name,
+        color: data.color,
+      },
+    });
+  }
+
+  /**
+   * Update an existing project
+   */
+  async update(id: string, data: UpdateProjectData): Promise<Project> {
+    return prisma.project.update({
+      where: {
+        id,
+      },
+      data: {
+        ...(data.name !== undefined && { name: data.name }),
+        ...(data.color !== undefined && { color: data.color }),
+      },
+    });
+  }
+
+  /**
+   * Delete a project
+   */
+  async delete(id: string): Promise<void> {
+    await prisma.project.delete({
+      where: {
+        id,
+      },
+    });
+  }
+}
