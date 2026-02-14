@@ -1206,3 +1206,176 @@ Maintains consistent architecture and error handling patterns with Project and T
 - Всі хендлери модульні та unit-тестовані окремо
 
 - Підтримується масштабування: додавання нових полів, маршрутів чи методів сервісу без порушення існуючого API
+
+---
+
+## [2026-02-14] — Frontend API Client Layer
+
+Tool: Cursor  
+Model: Auto (Cursor default model selection)  
+Scope: Multi-file generation
+
+### Prompt
+
+Implement a thin frontend API client layer for the existing Next.js App Router project.
+
+Requirements:
+
+1. Create a `/services` directory with the following files:
+
+- apiClient.ts
+- timeEntryService.ts
+- projectService.ts
+- taskService.ts
+
+2. apiClient.ts
+
+Implement:
+
+- A typed generic request function:
+
+  async function apiRequest<T>(
+  input: RequestInfo,
+  init?: RequestInit
+  ): Promise<T>
+
+- It should:
+  - Use fetch
+  - Parse JSON
+  - Expect backend envelope:
+    { success: true, data }
+    { success: false, error, code? }
+  - If success: false → throw an Error with message and attach `code` if present
+  - If response not ok → throw generic error
+  - Set headers:
+    'Content-Type': 'application/json'
+
+3. timeEntryService.ts
+
+Implement functions:
+
+- getTimeEntries(): Promise<TimeEntry[]>
+- getTimeEntry(id: string): Promise<TimeEntry>
+- startTimer(input: { description: string; projectId: string }): Promise<TimeEntry>
+- stopTimer(id: string): Promise<TimeEntry>
+- updateTimeEntry(id: string, data: Partial<TimeEntry>): Promise<TimeEntry>
+- deleteTimeEntry(id: string): Promise<void>
+
+Use apiRequest internally.
+Endpoints:
+
+GET /api/time-entries
+GET /api/time-entries/:id
+POST /api/time-entries
+POST /api/time-entries/:id/stop
+PATCH /api/time-entries/:id
+DELETE /api/time-entries/:id
+
+4. projectService.ts
+
+Implement:
+
+- getProjects()
+- createProject()
+- updateProject()
+- deleteProject()
+
+Using /api/projects endpoints.
+
+5. taskService.ts
+
+Implement:
+
+- getTasks()
+- createTask()
+- updateTask()
+- deleteTask()
+- getTasksAutocomplete(query: string)
+
+Using:
+
+GET /api/tasks
+POST /api/tasks
+PATCH /api/tasks/:id
+DELETE /api/tasks/:id
+GET /api/tasks/autocomplete?query=...
+
+6. Use proper TypeScript typing.
+   Import domain types where appropriate.
+   Do NOT put business logic here.
+   This layer must be thin and reusable.
+
+7. Keep code clean and readable.
+   Avoid single-letter variable names.
+   Add short JSDoc comments for each exported function.
+
+### Changes
+
+        new file:   src/services/apiClient.ts
+        new file:   src/services/projectService.ts
+        new file:   src/services/taskService.ts
+        new file:   src/services/timeEntryService.ts
+
+### Purpose
+
+Create a clean client layer separating UI from transport logic.
+Prepare foundation for hooks and components.
+Centralize fetch + error handling.
+Enforce backend envelope contract.
+
+### Result Summary
+
+Implemented a clean and fully typed frontend API client layer under `src/services`.
+
+Created:
+
+- apiClient.ts — generic typed fetch wrapper handling:
+  - Backend envelope contract `{ success, data }`
+  - Centralized JSON parsing
+  - Proper error throwing for:
+    - HTTP errors
+    - `{ success: false }` responses
+  - Automatic `Content-Type: application/json`
+
+- timeEntryService.ts — thin transport layer for:
+  - getTimeEntries
+  - getTimeEntry
+  - startTimer
+  - stopTimer
+  - updateTimeEntry
+  - deleteTimeEntry
+
+- projectService.ts — CRUD client for projects
+
+- taskService.ts — CRUD + autocomplete client for tasks
+
+All services:
+
+- Use domain types from `src/core/domain`
+- Contain no business logic
+- Are reusable and framework-agnostic
+- Respect backend envelope contract
+
+Architecture separation achieved:
+UI → hooks → services → API → service layer → repository → Prisma
+
+This establishes a clean transport boundary for the frontend.
+
+### Notes
+
+1. Strong architectural move:
+   The UI will not directly use `fetch`, which prevents transport leakage into components.
+
+2. Error handling is now centralized and consistent with backend error mapper.
+
+3. The layer is future-proof:
+   - If authentication headers are added later → only apiClient changes.
+   - If base URL changes → single adjustment.
+
+4. Minor observation:
+   You mentioned mapping `notes → description` and `startedAt → startTime`.
+   That suggests a naming mismatch between frontend model and backend domain.
+   If this mapping is intentional — OK.
+   If not — we may want to align naming to avoid unnecessary transformations.
+
+5. PATCH / DELETE for projects are implemented in client but not yet in API routes — this is fine and forward-compatible.
