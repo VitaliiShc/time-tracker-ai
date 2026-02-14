@@ -1379,3 +1379,133 @@ This establishes a clean transport boundary for the frontend.
    If not — we may want to align naming to avoid unnecessary transformations.
 
 5. PATCH / DELETE for projects are implemented in client but not yet in API routes — this is fine and forward-compatible.
+
+---
+
+## [2026-02-14] — useProjects Hook
+
+Tool: Cursor  
+Model: Auto (Cursor default model selection)  
+Scope: Single-file generation
+
+### Prompt
+
+Implement a React hook `useProjects` inside:
+
+src/hooks/useProjects.ts
+
+Requirements:
+
+1. Purpose
+
+Provide state management and CRUD orchestration for projects.
+This hook must use the existing projectService from:
+src/services/projectService
+
+Do NOT use fetch directly.
+Do NOT include business logic.
+
+2. State
+
+Manage:
+
+- projects: Project[]
+- isLoading: boolean
+- error: string | null
+
+3. On mount
+
+Fetch projects automatically.
+
+Use useEffect with a stable loadProjects() function.
+
+4. Exposed API
+
+The hook must return:
+
+{
+projects,
+isLoading,
+error,
+reload,
+createProject,
+updateProject,
+deleteProject,
+}
+
+5. Behavior
+
+- reload(): refetches project list
+- createProject(input): calls service, then reload
+- updateProject(id, data): calls service, then reload
+- deleteProject(id): calls service, then reload
+
+6. Error handling
+
+- Catch errors from service
+- Extract error.message
+- Set error state
+- Ensure isLoading
+
+### Changes
+
+        new file:   src/hooks/useProjects.ts
+
+### Purpose
+
+Provide state management and CRUD orchestration for projects.
+
+### Result Summary
+
+Implemented `useProjects` hook in `src/hooks/useProjects.ts`.
+
+The hook:
+
+- Manages:
+  - projects: Project[]
+  - isLoading: boolean
+  - error: string | null
+
+- Automatically fetches projects on mount via memoized `loadProjects`.
+
+- Exposes:
+  - reload()
+  - createProject()
+  - updateProject()
+  - deleteProject()
+
+- Uses only `projectService` (no direct fetch calls).
+
+- Properly handles:
+  - loading state
+  - error state
+  - async/await with try/catch
+  - stable callbacks with useCallback
+  - no infinite re-render loops
+
+Architecture integrity preserved:
+UI → hook → service → API → backend
+
+### Notes
+
+1. Stable load function
+   useCallback + useEffect dependency is correct.
+   No accidental infinite loops.
+
+2. Clean error propagation
+   Errors from service bubble up properly.
+   Not swallowed silently.
+
+3. Predictable mutation pattern
+   All mutations follow:
+   call service → reload list
+   This keeps state consistent and avoids partial stale updates.
+
+4. isLoading handling
+   Correctly managed in loadProjects via finally.
+   Mutation methods do not toggle isLoading — this is acceptable and avoids UI flicker.
+
+5. Safe and minimal complexity
+   No premature optimization.
+   No optimistic updates.
+   No hidden side effects.
