@@ -77,10 +77,10 @@ To generate a clean layered architecture for a scalable fullstack application.
 
 ### Changes
 
+        new file:   docs/ai-prompts-log.md
         new file:   app/api/projects/route.ts
         new file:   app/api/task-names/route.ts
         new file:   app/api/time-entries/route.ts
-        new file:   docs/ai-prompts-log.md
         new file:   prisma/schema.prisma
         new file:   src/api/projects/project.api.ts
         new file:   src/api/task-names/taskName.api.ts
@@ -95,78 +95,7 @@ To generate a clean layered architecture for a scalable fullstack application.
         new file:   src/core/services/project.service.ts
         new file:   src/core/services/taskName.service.ts
         new file:   src/core/services/timeEntry.service.ts
-        new file:   app/api/task-names/route.ts
-        new file:   app/api/time-entries/route.ts
-        new file:   docs/ai-prompts-log.md
-        new file:   prisma/schema.prisma
-        new file:   src/api/projects/project.api.ts
-        new file:   src/api/task-names/taskName.api.ts
-        new file:   src/api/time-entries/timeEntry.api.ts
-        new file:   src/core/db/prismaClient.ts
-        new file:   src/core/domain/project.ts
-        new file:   src/core/domain/taskName.ts
-        new file:   src/core/domain/timeEntry.ts
-        new file:   src/core/repositories/project.repository.ts
-        new file:   src/core/repositories/taskName.repository.ts
-        new file:   src/core/repositories/timeEntry.repository.ts
-        new file:   src/core/services/project.service.ts
-        new file:   src/core/services/taskName.service.ts
-        new file:   src/core/services/timeEntry.service.ts
-        new file:   docs/ai-prompts-log.md
-        new file:   prisma/schema.prisma
-        new file:   src/api/projects/project.api.ts
-        new file:   src/api/task-names/taskName.api.ts
-        new file:   src/api/time-entries/timeEntry.api.ts
-        new file:   src/core/db/prismaClient.ts
-        new file:   src/core/domain/project.ts
-        new file:   src/core/domain/taskName.ts
-        new file:   src/core/domain/timeEntry.ts
-        new file:   src/core/repositories/project.repository.ts
-        new file:   src/core/repositories/taskName.repository.ts
-        new file:   src/core/repositories/timeEntry.repository.ts
-        new file:   src/core/services/project.service.ts
-        new file:   src/core/services/taskName.service.ts
-        new file:   src/core/services/timeEntry.service.ts
-        new file:   src/api/projects/project.api.ts
-        new file:   src/api/task-names/taskName.api.ts
-        new file:   src/api/time-entries/timeEntry.api.ts
-        new file:   src/core/db/prismaClient.ts
-        new file:   src/core/domain/project.ts
-        new file:   src/core/domain/taskName.ts
-        new file:   src/core/domain/timeEntry.ts
-        new file:   src/core/repositories/project.repository.ts
-        new file:   src/core/repositories/taskName.repository.ts
-        new file:   src/core/repositories/timeEntry.repository.ts
-        new file:   src/core/services/project.service.ts
-        new file:   src/core/services/taskName.service.ts
-        new file:   src/core/services/timeEntry.service.ts
-        new file:   src/core/domain/project.ts
-        new file:   src/core/domain/taskName.ts
-        new file:   src/core/domain/timeEntry.ts
-        new file:   src/core/repositories/project.repository.ts
-        new file:   src/core/repositories/taskName.repository.ts
-        new file:   src/core/repositories/timeEntry.repository.ts
-        new file:   src/core/services/project.service.ts
-        new file:   src/core/services/taskName.service.ts
-        new file:   src/core/services/timeEntry.service.ts
-        new file:   src/core/repositories/taskName.repository.ts
-        new file:   src/core/repositories/timeEntry.repository.ts
-        new file:   src/core/services/project.service.ts
-        new file:   src/core/services/taskName.service.ts
-        new file:   src/core/services/timeEntry.service.ts
         new file:   src/presentation/components/projects/ProjectList.tsx
-        new file:   src/core/services/taskName.service.ts
-        new file:   src/core/services/timeEntry.service.ts
-        new file:   src/presentation/components/projects/ProjectList.tsx
-        new file:   src/presentation/components/task-names/TaskNameAutocomplete.tsx
-        new file:   src/presentation/components/time-entries/TimeEntryForm.tsx
-        new file:   src/core/services/timeEntry.service.ts
-        new file:   src/presentation/components/projects/ProjectList.tsx
-        new file:   src/presentation/components/task-names/TaskNameAutocomplete.tsx
-        new file:   src/presentation/components/time-entries/TimeEntryForm.tsx
-        new file:   src/presentation/components/projects/ProjectList.tsx
-        new file:   src/presentation/components/task-names/TaskNameAutocomplete.tsx
-        new file:   src/presentation/components/time-entries/TimeEntryForm.tsx
         new file:   src/presentation/components/task-names/TaskNameAutocomplete.tsx
         new file:   src/presentation/components/time-entries/TimeEntryForm.tsx
         new file:   src/presentation/hooks/useProjects.ts
@@ -233,7 +162,6 @@ This will serve as the foundation for repositories and data access.
 
 ### Changes
 
-        modified:   docs/ai-prompts-log.md
         modified:   package-lock.json
         modified:   package.json
         new file:   prisma.config.ts
@@ -289,7 +217,6 @@ This repository will be used by service layer for business logic.
 
 ### Changes
 
-        modified:   docs/ai-prompts-log.md
         modified:   src/core/repositories/project.repository.ts
 
 ### Result Summary
@@ -364,7 +291,6 @@ The repository must support partial updates and maintain proper TypeScript typin
 
 ### Changes
 
-        modified:   docs/ai-prompts-log.md
         modified:   src/core/repositories/timeEntry.repository.ts
 
 ### Result Summary
@@ -450,7 +376,6 @@ for controllers or API routes.
 
 ### Changes
 
-        modified:   docs/ai-prompts-log.md
         modified:   src/api/projects/project.api.ts
         modified:   src/core/domain/project.ts
         modified:   src/core/repositories/project.repository.ts
@@ -509,5 +434,145 @@ for controllers or API routes.
 - Dependency Injection дозволяє легко писати unit-тести для сервісу.
 
 - Сервіс готовий до розширення (наприклад: soft-delete, project statistics, etc.).
+
+---
+
+## [2026-02-14] — To implement business logic for time tracking
+
+Tool: Cursor
+Model: Auto (Cursor default model selection)
+Scope: Multi-file generation
+
+### Prompt
+
+Create a service class for TimeEntry entity.
+
+Requirements:
+
+1. File: src/core/services/timeEntry.service.ts
+2. Inject dependencies via constructor:
+   - TimeEntryRepository
+   - ProjectRepository
+3. Do NOT use Prisma directly in the service.
+4. Implement business logic methods:
+   - getEntries(): Promise<TimeEntry[]>
+   - getEntry(id: string): Promise<TimeEntry>
+   - startTimer(data: { description: string; projectId: string }): Promise<TimeEntry>
+   - stopTimer(id: string): Promise<TimeEntry>
+   - updateEntry(id: string, data: { description?: string; startTime?: Date; endTime?: Date }): Promise<TimeEntry>
+   - deleteEntry(id: string): Promise<void>
+
+5. Business rules:
+   - A timer cannot be started if there is already an active timer (an entry with null endTime).
+   - When starting a timer:
+     - Validate project exists using ProjectRepository.
+     - description must not be empty (trim it).
+     - startTime = current date.
+     - endTime = null.
+     - duration = 0.
+   - When stopping a timer:
+     - Entry must exist.
+     - Entry must not already be stopped.
+     - endTime = current date.
+     - duration = difference in seconds between endTime and startTime.
+   - updateEntry:
+     - Recalculate duration if startTime or endTime changes.
+   - deleteEntry:
+     - Throw error if entry not found.
+
+6. Add proper error classes:
+   - TimeEntryNotFoundError
+   - ActiveTimerExistsError
+   - TimeEntryValidationError
+
+7. Use strong TypeScript typing.
+8. Add JSDoc comments.
+9. Ensure clean, maintainable, production-ready code.
+
+### Purpose
+
+To implement business logic for time tracking.
+
+The service should:
+
+- Control active timer behavior
+- Calculate duration automatically
+- Enforce project existence validation
+- Prevent invalid states (e.g., multiple active timers)
+
+This establishes the core domain logic of the time tracking system
+while keeping persistence concerns inside repositories.
+
+### Changes
+
+        modified:   src/core/repositories/timeEntry.repository.ts
+        modified:   src/core/services/timeEntry.service.ts
+
+### Result Summary
+
+- Додано getActiveEntry() у TimeEntryRepository для перевірки наявності активного таймера (endTime = null).
+
+- Реалізовано TimeEntryService у src/core/services/timeEntry.service.ts.
+
+- Використано dependency injection:
+  - TimeEntryRepository
+
+  - ProjectRepository
+
+- Prisma не використовується у сервісі — чисте дотримання Clean Architecture.
+
+- Реалізовані методи:
+  - getEntries() — отримання всіх записів
+
+  - getEntry(id) — отримання запису з перевіркою існування
+
+  - startTimer() — старт нового таймера з валідацією
+
+  - stopTimer(id) — зупинка таймера з автоматичним розрахунком duration
+
+  - updateEntry(id, data) — часткове оновлення з перерахунком duration
+
+  - deleteEntry(id) — видалення з перевіркою існування
+
+- Бізнес-правила:
+  - Заборонено запускати новий таймер, якщо вже є активний
+
+  - Обов’язкова перевірка існування проекту
+
+  - description обов’язковий та trim()
+
+  - duration рахується автоматично (seconds)
+
+- Додано кастомні помилки:
+  - TimeEntryNotFoundError
+
+  - ActiveTimerExistsError
+
+  - TimeEntryValidationError
+
+- Додано helper durationInSeconds() для централізованого розрахунку часу
+
+- Повна типізація через Prisma-generated типи
+
+- Повна JSDoc документація
+
+### Notes
+
+- Логіка активного таймера реалізована правильно через repository → сервіс не знає про Prisma.
+
+- Інваріант "only one active timer" тепер гарантований на рівні домену.
+
+- Перерахунок duration при зміні startTime або endTime — критично правильне рішення.
+
+- Помилки розділені по типах → це дозволить правильно мапити їх у HTTP status коди.
+
+- Архітектура тепер має повноцінний Domain Core:
+  - Repositories
+
+  - Services
+
+  - Error layer
+
+  - Business invariants
 
 ---

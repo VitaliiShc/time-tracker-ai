@@ -41,6 +41,18 @@ export class TimeEntryRepository {
   }
 
   /**
+   * Get the active time entry (one with null endTime), if any.
+   * At most one active entry is expected at a time.
+   */
+  async getActiveEntry(): Promise<TimeEntry | null> {
+    return prisma.timeEntry.findFirst({
+      where: {
+        endTime: null,
+      },
+    });
+  }
+
+  /**
    * Create a new time entry
    */
   async create(data: CreateTimeEntryData): Promise<TimeEntry> {
