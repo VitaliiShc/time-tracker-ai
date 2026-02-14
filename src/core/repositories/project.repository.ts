@@ -24,6 +24,15 @@ export class ProjectRepository {
   }
 
   /**
+   * Get a project by name (case-sensitive exact match)
+   */
+  async getByName(name: string): Promise<Project | null> {
+    return prisma.project.findFirst({
+      where: { name },
+    });
+  }
+
+  /**
    * Get a project by ID
    */
   async getById(id: string): Promise<Project | null> {

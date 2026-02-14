@@ -3,8 +3,7 @@
 export interface Project {
   id: string;
   name: string;
-  description?: string;
-  isArchived: boolean;
+  color: string;
   createdAt: Date;
   updatedAt: Date;
 }

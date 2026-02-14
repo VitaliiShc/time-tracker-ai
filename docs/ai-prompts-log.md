@@ -331,7 +331,7 @@ This repository will be used by service layer for business logic.
 
 ---
 
-## [2026-02-13] — TimeEntry repository class implementation
+## [2026-02-14] — TimeEntry repository class implementation
 
 Tool: Cursor
 Model: Auto (Cursor default model selection)
@@ -403,5 +403,111 @@ The repository must support partial updates and maintain proper TypeScript typin
 - Наступний крок: створення service layer для бізнес-логіки (ProjectService та TimeEntryService)
 
 - Рекомендація: додати unit-тести на CRUD методи для перевірки логіки та зв’язків
+
+---
+
+## [2026-02-13] — Example
+
+Tool: Cursor
+Model: Auto (Cursor default model selection)
+Scope: Multi-file generation
+
+### Prompt
+
+Create a service class for Project entity.
+
+Requirements:
+
+1. File: src/core/services/project.service.ts
+2. Use ProjectRepository (inject via constructor)
+3. Do NOT use Prisma directly inside the service
+4. Implement business logic methods:
+   - getProjects(): Promise<Project[]>
+   - getProject(id: string): Promise<Project>
+   - createProject(data: { name: string; color: string }): Promise<Project>
+   - updateProject(id: string, data: { name?: string; color?: string }): Promise<Project>
+   - deleteProject(id: string): Promise<void>
+
+5. Business rules:
+   - Throw an error if project is not found in getProject
+   - Validate that project name is not empty
+   - Trim name before saving
+   - Prevent creation if a project with the same name already exists
+6. Ensure clean architecture:
+   - No direct database logic
+   - Use repository only
+   - Add proper TypeScript typing
+   - Add JSDoc comments
+7. Code must be production-ready and maintainable
+
+### Purpose
+
+To introduce business logic layer for Project entity.
+The service should encapsulate validation rules, error handling, and domain logic,
+while delegating data access to ProjectRepository.
+This separates domain logic from persistence logic and prepares the application
+for controllers or API routes.
+
+### Changes
+
+        modified:   docs/ai-prompts-log.md
+        modified:   src/api/projects/project.api.ts
+        modified:   src/core/domain/project.ts
+        modified:   src/core/repositories/project.repository.ts
+        modified:   src/core/services/project.service.ts
+
+### Result Summary
+
+- Повністю реалізовано ProjectService у src/core/services/project.service.ts.
+
+- Сервіс використовує dependency injection через ProjectRepository (без прямого використання Prisma).
+
+- Реалізовані методи:
+  - getProjects() — отримання всіх проектів
+
+  - getProject(id) — отримання проекту з перевіркою існування
+
+  - createProject(data) — створення з валідацією та перевіркою дублікатів
+
+  - updateProject(id, data) — оновлення з перевіркою існування та валідацією
+
+  - deleteProject(id) — видалення з перевіркою існування
+
+- Додані бізнес-правила:
+  - Назва проекту обов’язкова
+
+  - Назва тримається через trim()
+
+  - Заборонено створення проекту з існуючим іменем
+
+- Додано getByName() у ProjectRepository для перевірки дублікатів.
+
+- Оновлено domain-модель Project — тепер відповідає Prisma schema (id, name, color, createdAt, updatedAt).
+
+- API оновлено для використання ProjectRepository + ProjectService.
+
+- Введено кастомні помилки:
+  - ProjectNotFoundError
+
+  - ProjectValidationError
+
+- Повна типізація через CreateProjectInput, UpdateProjectInput та domain Project.
+
+### Notes
+
+- Архітектура тепер чітко розділена:
+  - Repository → persistence
+
+  - Service → бізнес-логіка
+
+  - API → транспортний шар
+
+- Duplicate-check через getByName() — правильний підхід без завантаження всіх проектів.
+
+- Domain-модель синхронізована з Prisma — уникнуто drift між domain і persistence.
+
+- Dependency Injection дозволяє легко писати unit-тести для сервісу.
+
+- Сервіс готовий до розширення (наприклад: soft-delete, project statistics, etc.).
 
 ---
