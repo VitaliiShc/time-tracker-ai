@@ -576,3 +576,406 @@ while keeping persistence concerns inside repositories.
   - Business invariants
 
 ---
+
+## [2026-02-14] — Create Base Domain Error
+
+Tool: Cursor
+Model: Auto (Cursor default model selection)
+Scope: Multi-file generation
+
+### Prompt
+
+Create a base DomainError class for the application.
+
+Requirements:
+
+1. File: src/core/errors/domain.error.ts
+2. DomainError should extend Error
+3. It should include:
+   - message: string
+   - code: string (machine-readable error code)
+4. Add proper constructor
+5. Add JSDoc
+6. Production-ready implementation
+
+### Purpose
+
+To introduce a centralized base error class for domain-level exceptions.
+
+The DomainError class establishes a consistent error structure
+(message + machine-readable code) that can be extended by all
+business logic errors.
+
+This enables clean separation between:
+
+- Domain logic (services throwing errors)
+- HTTP layer (mapping domain errors to responses)
+
+It prepares the system for centralized error handling and
+production-grade API responses.
+
+### Changes
+
+        new file:   src/core/errors/domain.error.ts
+
+### Result Summary
+
+- Створено базовий клас DomainError у src/core/errors/domain.error.ts.
+- DomainError розширює стандартний Error.
+- Додано властивості:
+  - message (людиночитабельний опис)
+  - code (machine-readable error code, readonly)
+- Реалізовано production-safe поведінку:
+  - Object.setPrototypeOf(...) для коректного instanceof
+  - Error.captureStackTrace(...) для чистого stack trace
+- Додано метод toJSON() для логування та API-відповідей.
+- Додано повну JSDoc документацію та приклад розширення.
+- Клас готовий для наслідування (ProjectNotFoundError, etc.).
+
+### Notes
+
+- DomainError створює єдиний стандарт помилок у системі.
+- Наявність machine-readable code дозволяє:
+  - легко мапити помилки у HTTP статуси
+  - стандартизувати відповіді API
+  - логувати помилки структуровано
+- Object.setPrototypeOf критично важливий для коректної роботи instanceof після компіляції TypeScript.
+- toJSON() готує клас до використання в centralized error handler.
+- Архітектурно це основа для production-grade error handling.
+
+---
+
+## [2026-02-14] — Error Mapper (HTTP Mapping Layer)
+
+Tool: Cursor
+Model: Auto (Cursor default model selection)
+Scope: Multi-file generation
+
+### Prompt
+
+Create a centralized HTTP error mapping utility.
+
+Requirements:
+
+1. File: src/api/utils/errorMapper.ts
+2. Export function: mapErrorToHttp(error: unknown)
+3. Handle the following domain errors:
+   - ProjectNotFoundError → 404
+   - TimeEntryNotFoundError → 404
+   - ActiveTimerExistsError → 409
+   - ProjectValidationError → 400
+   - TimeEntryValidationError → 400
+   - DomainError → 400
+   - Unknown error → 500
+
+4. The function must return:
+   {
+   status: number;
+   body: {
+   error: string;
+   code?: string;
+   };
+   }
+
+5. Use instanceof checks.
+6. Do NOT use any framework-specific logic (no NextResponse inside).
+7. Add proper TypeScript typing.
+8. Add JSDoc comments.
+9. Clean, production-ready implementation.
+
+### Purpose
+
+To implement a centralized HTTP error mapping layer that translates
+domain-level errors into standardized HTTP responses.
+
+This ensures:
+
+- Services throw only domain errors.
+- API routes remain thin and transport-focused.
+- HTTP status codes are consistent and predictable.
+- Internal error details are not leaked to clients.
+
+This layer formalizes the boundary between the domain core
+and the transport layer.
+
+### Changes
+
+        new file:   src/api/utils/errorMapper.ts
+        new file:   src/core/errors/domain.error.ts
+
+### Result Summary
+
+- Створено centralized HTTP error mapper у src/api/utils/errorMapper.ts.
+- Реалізовано функцію mapErrorToHttp(error: unknown).
+- Використано instanceof перевірки для мапінгу доменних помилок:
+  - ProjectNotFoundError → 404
+  - TimeEntryNotFoundError → 404
+  - ActiveTimerExistsError → 409
+  - ProjectValidationError → 400
+  - TimeEntryValidationError → 400
+  - DomainError → 400
+  - Unknown error → 500 (generic message)
+- Повертається стандартизована структура:
+  {
+  status: number,
+  body: {
+  error: string,
+  code?: string
+  }
+  }
+- Не використовується framework-specific логіка (NextResponse відсутній).
+- Експортовано типи MappedHttpError та HttpErrorResponseBody.
+- Готово для використання в API routes.
+
+### Notes
+
+- Чітко реалізовано separation of concerns:
+  Service → кидає domain errors
+  API → мапить їх у HTTP через errorMapper
+- Unknown errors не розкривають внутрішню інформацію (production-safe).
+- Використання instanceof гарантує строгий контроль типів.
+- Структурована відповідь API спрощує інтеграцію з фронтендом.
+- Архітектура тепер має централізовану error-handling стратегію.
+
+---
+
+## [2026-02-14] — Refactor Project API Route
+
+Tool: Cursor
+Model: Auto (Cursor default model selection)
+Scope: Multi-file generation
+
+### Prompt
+
+Refactor the Project API route to use centralized error handling.
+
+Requirements:
+
+1. File: src/api/projects/project.api.ts
+2. Wrap all service calls in try/catch blocks.
+3. Use mapErrorToHttp(error) inside catch.
+4. Return standardized JSON structure:
+
+   Success:
+   {
+   success: true,
+   data: ...
+   }
+
+   Error:
+   {
+   success: false,
+   error: string,
+   code?: string
+   }
+
+5. Use NextResponse.json() for responses.
+6. HTTP status codes must come from errorMapper.
+7. Do not leak internal error details.
+8. Ensure strong TypeScript typing.
+9. Clean, production-ready implementation.
+
+### Purpose
+
+To refactor the Project API route to use centralized error handling
+via the errorMapper utility.
+
+This ensures:
+
+- Consistent HTTP status codes
+- Unified response envelope
+- No leakage of internal errors
+- Proper separation between domain and transport layers
+
+This completes the full clean architecture flow:
+Repository → Service → DomainError → ErrorMapper → API.
+
+### Changes
+
+### Result Summary
+
+- Всі виклики сервісу в project.api.ts обгорнуті в try/catch.
+- У catch використовується mapErrorToHttp(error).
+- HTTP статуси беруться виключно з errorMapper.
+- Реалізовано стандартизований response envelope:
+
+  Success:
+  {
+  success: true,
+  data: T
+  }
+
+  Error:
+  {
+  success: false,
+  error: string,
+  code?: string
+  }
+
+- Використовується NextResponse.json() для відповіді.
+- Типізація уніфікована через ApiSuccessResponse<T>, ApiErrorResponse, ApiResponse<T>.
+- Використано доменний тип Project для відповіді.
+- Забезпечено production-safe обробку unknown errors (500).
+
+### Notes
+
+- API тепер є thin transport layer без бізнес-логіки.
+- Вся валідація та правила залишилися в Service.
+- Error handling централізований, що спрощує масштабування.
+- Стандартизований response envelope спрощує фронтенд-інтеграцію.
+- Немає витоку внутрішніх помилок (good security practice).
+- Архітектура відповідає clean architecture принципам.
+
+Project API тепер production-ready.
+
+---
+
+## [2026-02-14] — Implement TimeEntry API with Centralized Error Handling
+
+Tool: Cursor
+Model: Auto (Cursor default model selection)
+Scope: Multi-file generation
+
+### Prompt
+
+Refactor/implement the TimeEntry API route to be production-ready.
+
+Requirements:
+
+1. File: src/api/time-entries/timeEntry.api.ts
+2. Wrap all service calls in try/catch blocks.
+3. Use mapErrorToHttp(error) inside catch.
+4. Return standardized JSON structure:
+
+   Success:
+   {
+   success: true,
+   data: ...
+   }
+
+   Error:
+   {
+   success: false,
+   error: string,
+   code?: string
+   }
+
+5. Use NextResponse.json() for responses.
+6. HTTP status codes must come from errorMapper.
+7. Do not leak internal error details.
+8. Ensure strong TypeScript typing using:
+   - TimeEntry from domain / Prisma
+   - ApiResponse<T> envelope type
+
+9. Implement all endpoints needed for TimeEntryService:
+   - getEntries()
+   - getEntry(id)
+   - startTimer({ description, projectId })
+   - stopTimer(id)
+   - updateEntry(id, data)
+   - deleteEntry(id)
+
+10. Keep API layer thin: no business logic in the route.
+
+### Purpose
+
+To implement a production-ready TimeEntry API route with centralized error handling.
+
+Goals:
+
+- Thin transport layer: repository/service handle business logic
+- Standardized JSON envelope for frontend consumption
+- Proper HTTP codes via mapErrorToHttp
+- Production-safe handling of unknown errors
+- Strong TypeScript typing
+- Consistency with Project API route
+
+### Changes
+
+        new file:   app/api/time-entries/[id]/route.ts
+        new file:   app/api/time-entries/[id]/stop/route.ts
+        modified:   app/api/time-entries/route.ts
+        modified:   src/api/projects/project.api.ts
+        modified:   src/api/time-entries/timeEntry.api.ts
+        new file:   src/api/utils/errorMapper.ts
+        new file:   src/core/errors/domain.error.ts
+
+### Result Summary
+
+1. DomainError (src/core/errors/domain.error.ts)
+
+- Базовий клас для всіх доменних помилок.
+
+- Має message та машинозчитуваний code.
+
+- Підтримка instanceof після транспіляції та toJSON() для API/логування.
+
+- Можливість розширення під конкретні помилки (ProjectNotFoundError тощо).
+
+2. HTTP Error Mapper (src/api/utils/errorMapper.ts)
+
+- Функція mapErrorToHttp(error) централізовано мапить доменні помилки на HTTP статуси:
+  - 404 → Not Found (ProjectNotFoundError, TimeEntryNotFoundError)
+
+  - 409 → Conflict (ActiveTimerExistsError)
+
+  - 400 → Bad Request (ProjectValidationError, TimeEntryValidationError, DomainError)
+
+  - 500 → Unknown / generic errors
+
+- Повертає { status, body: { error, code? } }.
+
+Використовується у всіх API-хендлерах для безпечного оброблення помилок.
+
+3. Project API Refactor (src/api/projects/project.api.ts)
+
+- Усі виклики сервісу обгорнуті в try/catch.
+
+- Використовується mapErrorToHttp(error) у catch.
+
+- Відповідь у стандартному envelope:
+
+```ts
+Success: { success: true, data: Project | Project[] }
+Error: { success: false, error: string, code?: string }
+```
+
+- Типізація через ApiResponse<T>.
+
+- Domain type Project використовується для відповіді.
+
+- Production-safe обробка unknown errors (500).
+
+- Thin transport layer без бізнес-логіки; правила та валідація залишаються у сервісі.
+
+5. TimeEntry API + Centralized Error Handling (src/api/time-entries/timeEntry.api.ts + маршрути)
+
+- Реалізовано всі хендлери: getEntries, getEntry, startTimer, stopTimer, updateEntry, deleteEntry.
+
+- Всі хендлери використовують TimeEntryService та ProjectRepository.
+
+- Центральна обробка помилок через mapErrorToHttp.
+
+- Стандартизований JSON envelope.
+
+- Типізація через TimeEntry + ApiResponse<T>.
+
+- Роутинг Next.js App Router для list, single, update, delete, stop.
+
+- Тонкий шар: парсинг запитів, приведення типів, жодної бізнес-логіки.
+
+- API готовий до production, модульний та unit-тестований, без витоку внутрішніх помилок, узгоджено з clean architecture.
+
+### Notes
+
+- Валідація та правила залишаються у сервісах (ProjectService, TimeEntryService).
+
+- Централізоване оброблення помилок спрощує масштабування та безпеку.
+
+- Стандартизований response envelope забезпечує легку інтеграцію з фронтендом.
+
+- Архітектура відповідає clean architecture принципам.
+
+- Production-ready: Project API та TimeEntry API готові для використання, тестування та масштабування.
+
+---
