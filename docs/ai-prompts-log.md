@@ -979,3 +979,117 @@ Error: { success: false, error: string, code?: string }
 - Production-ready: Project API та TimeEntry API готові для використання, тестування та масштабування.
 
 ---
+
+## [2026-02-14] — TaskName API
+
+Tool: Cursor
+Model: Auto (Cursor default model selection)
+Scope: Multi-file generation
+
+### Prompt
+
+Create a repository, service, and production-ready API layer for TaskName entity using PrismaClient.
+
+Requirements:
+
+1. **Repository** (`src/core/repositories/task.repository.ts`):
+
+- Use PrismaClient singleton from `src/core/db/prismaClient.ts`
+- Implement methods:
+  - getAll(): Promise<TaskName[]>
+  - getById(id: string): Promise<TaskName | null>
+  - create(input: { name: string; description?: string }): Promise<TaskName>
+  - update(id: string, input: { name?: string; description?: string }): Promise<TaskName>
+  - delete(id: string): Promise<void>
+- Proper TypeScript typing and JSDoc
+- No business logic
+
+2. **Domain type** (`src/core/domain/task.ts`):
+
+- id: string (UUID)
+- name: string
+- description?: string
+- createdAt: Date
+- updatedAt: Date
+
+3. **Service** (`src/core/services/task.service.ts`):
+
+- Inject TaskRepository
+- Implement business rules:
+  - name cannot be empty
+  - name must be unique (use repository getByName)
+- Throw custom errors (TaskNotFoundError, TaskValidationError)
+- Methods: getTasks, getTask, createTask, updateTask, deleteTask
+
+4. **API layer** (`src/api/tasks/task.api.ts`):
+
+- All routes wrapped in try/catch
+- Use centralized error mapper `mapErrorToHttp(error)`
+- Standardized JSON envelope `{ success: true/false, data?, error?, code? }`
+- Thin transport layer only: parsing request, calling service, returning response
+
+### Purpose
+
+To create the TaskName backend layer (repository, service, API) for managing tasks.
+The API should be production-ready with centralized error handling, TypeScript typing,
+and clean separation between transport layer and business logic.
+
+### Changes
+
+        new file:   app/api/tasks/[id]/route.ts
+        new file:   app/api/tasks/route.ts
+        modified:   prisma/schema.prisma
+        new file:   src/api/tasks/task.api.ts
+        modified:   src/api/utils/errorMapper.ts
+        new file:   src/core/domain/task.ts
+        new file:   src/core/repositories/task.repository.ts
+        new file:   src/core/services/task.service.ts
+
+### Result Summary
+
+1. Реалізація API шару:
+
+- Хендлери: `handleGetTasks`, `handleGetTask`, `handleCreateTask`, `handleUpdateTask`, `handleDeleteTask`
+- Всі хендлери обгорнуті в try/catch
+- Помилки централізовано обробляються через `mapErrorToHttp(error)`
+- Стандартизований JSON envelope:
+  - Success: `{ success: true, data: T }`
+  - Error: `{ success: false, error: string, code?: string }`
+- Створення (`create`) повертає HTTP 201
+- Лише парсинг та передача до сервісу — бізнес-логіка у TaskService
+- Типізація через доменний тип TaskName та ApiResponse<T>
+
+2. Сервісний шар:
+
+- `TaskService` інжектується з `TaskRepository`
+- Методи: `getTasks`, `getTask`, `createTask`, `updateTask`, `deleteTask`
+- Бизнес-правила:
+  - name обов’язкове, trim
+  - унікальність name через `getByName`
+- Кастомні помилки: `TaskNotFoundError`, `TaskValidationError`
+
+3. Репозиторій:
+
+- `TaskRepository` використовує PrismaClient singleton
+- CRUD методи + `getByName` для перевірки унікальності
+- JSDoc на методах, без бізнес-логіки
+- Прив’язка до доменного типу (null → undefined для description)
+
+4. Роутінг:
+
+- `app/api/tasks/route.ts` — GET/POST
+- `app/api/tasks/[id]/route.ts` — GET/PATCH/DELETE
+- Всі маршрути правильно прив’язані до хендлерів
+
+### Notes
+
+- API готовий до production
+  - Централізована обробка помилок
+  - Консистентний формат відповіді для фронтенду
+  - Сильна TypeScript-типізація
+- Архітектура узгоджена з Project та TimeEntry API
+- Валідація та бізнес-логіка залишилися у сервісі
+- Хендлери тонкі, modular, unit-тестовані
+- Підтримується масштабування та додавання нових методів без порушення API
+
+---

@@ -4,6 +4,10 @@ import {
   ProjectValidationError,
 } from '@/core/services/project.service';
 import {
+  TaskNotFoundError,
+  TaskValidationError,
+} from '@/core/services/task.service';
+import {
   ActiveTimerExistsError,
   TimeEntryNotFoundError,
   TimeEntryValidationError,
@@ -52,6 +56,13 @@ export function mapErrorToHttp(error: unknown): MappedHttpError {
     };
   }
 
+  if (error instanceof TaskNotFoundError) {
+    return {
+      status: 404,
+      body: { error: message, code: 'TASK_NOT_FOUND' },
+    };
+  }
+
   if (error instanceof TimeEntryNotFoundError) {
     return {
       status: 404,
@@ -63,6 +74,13 @@ export function mapErrorToHttp(error: unknown): MappedHttpError {
     return {
       status: 409,
       body: { error: message, code: 'ACTIVE_TIMER_EXISTS' },
+    };
+  }
+
+  if (error instanceof TaskValidationError) {
+    return {
+      status: 400,
+      body: { error: message, code: 'TASK_VALIDATION_ERROR' },
     };
   }
 

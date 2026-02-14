@@ -32,3 +32,13 @@ model TimeEntry {
 
   @@map("time_entries")
 }
+
+model TaskName {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("task_names")
+}
