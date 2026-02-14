@@ -331,7 +331,7 @@ This repository will be used by service layer for business logic.
 
 ---
 
-## [2026-02-14] — TimeEntry repository class implementation
+## [2026-02-13] — TimeEntry repository class implementation
 
 Tool: Cursor
 Model: Auto (Cursor default model selection)
@@ -406,7 +406,7 @@ The repository must support partial updates and maintain proper TypeScript typin
 
 ---
 
-## [2026-02-13] — Example
+## [2026-02-14] — Implement a business logic layer for the Project entity
 
 Tool: Cursor
 Model: Auto (Cursor default model selection)
