@@ -56,6 +56,19 @@ function parseUpdateBody(body: unknown): UpdateTaskInput {
   return data;
 }
 
+/** GET /api/tasks/autocomplete?query=… – search task names by name (for autocomplete) */
+export async function handleGetTasksAutocomplete(
+  req: NextRequest
+): Promise<NextResponse<ApiResponse<TaskName[]>>> {
+  try {
+    const query = req.nextUrl.searchParams.get('query') ?? '';
+    const tasks = await taskService.getTasksAutocomplete(query);
+    return NextResponse.json({ success: true, data: tasks });
+  } catch (error) {
+    return errorResponse(error);
+  }
+}
+
 /** GET /api/tasks – list all task names */
 export async function handleGetTasks(
   _req: NextRequest

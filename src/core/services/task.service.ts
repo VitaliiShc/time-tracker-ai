@@ -45,6 +45,19 @@ export class TaskService {
   }
 
   /**
+   * Returns task names whose name contains the given query (for autocomplete).
+   * @param query - Substring to match in name (trimmed; empty returns all)
+   * @returns Matching task names
+   */
+  async getTasksAutocomplete(query: string): Promise<TaskName[]> {
+    const q = query.trim();
+    if (q.length === 0) {
+      return this.taskRepo.getAll();
+    }
+    return this.taskRepo.searchByName(q);
+  }
+
+  /**
    * Returns a single task name by id.
    * @param id - Task name id (UUID)
    * @returns The task name

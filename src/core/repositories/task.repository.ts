@@ -54,6 +54,19 @@ export class TaskRepository {
   }
 
   /**
+   * Returns task names whose name contains the given query string (for autocomplete).
+   * @param query - Substring to match in name
+   * @returns Matching task names, ordered by name
+   */
+  async searchByName(query: string): Promise<TaskName[]> {
+    const rows = await prisma.taskName.findMany({
+      where: { name: { contains: query } },
+      orderBy: { name: 'asc' },
+    });
+    return rows.map(toDomain);
+  }
+
+  /**
    * Creates a new task name.
    * @param input - name and optional description
    * @returns The created task name

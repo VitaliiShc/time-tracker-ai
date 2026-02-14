@@ -1093,3 +1093,116 @@ and clean separation between transport layer and business logic.
 - Підтримується масштабування та додавання нових методів без порушення API
 
 ---
+
+## [2026-02-14] — TaskName Repository + Service + API
+
+Tool: Cursor
+Model: Auto (Cursor default model selection)
+Scope: Multi-file generation
+
+### Prompt
+
+Create a backend layer for the TaskName entity with autocomplete support.
+
+Requirements:
+
+1. Prisma model: TaskName (id: UUID, name: string, description?: string, createdAt, updatedAt)
+2. Domain type: src/core/domain/task.ts → TaskName matching Prisma fields
+3. Repository: src/core/repositories/task.repository.ts
+   - Use PrismaClient singleton from src/core/db/prismaClient.ts
+   - Implement methods: getAll(), getById(id), getByName(name), create(input), update(id, input), delete(id)
+   - Map Prisma rows to domain types
+   - No business logic, JSDoc comments
+4. Service: src/core/services/task.service.ts
+   - Inject TaskRepository
+   - Methods: getTasks(), getTask(id), createTask(input), updateTask(id, input), deleteTask(id)
+   - Validation rules: name non-empty (trim), unique (via getByName)
+   - Throw TaskNotFoundError, TaskValidationError as appropriate
+5. API: src/api/tasks/task.api.ts
+   - All handlers in try/catch
+   - Errors via mapErrorToHttp → consistent HTTP status and messages
+   - Envelope: { success: true, data } / { success: false, error, code? }
+   - Handlers: handleGetTasks, handleGetTask(id), handleCreateTask, handleUpdateTask(id), handleDeleteTask(id)
+   - Create returns 201 on success
+6. Routes:
+   - GET/POST app/api/tasks/route.ts → list, create
+   - GET/PATCH/DELETE app/api/tasks/[id]/route.ts → get, update, delete
+7. Autocomplete endpoint:
+   - GET /api/tasks/autocomplete?query=…
+   - Returns matching TaskName[] filtered by `name` containing the query string
+8. Strong TypeScript typing throughout
+9. Follow patterns used for Project API and TimeEntry API
+
+### Purpose
+
+To implement a fully production-ready backend layer for TaskName with repository, service, API, and autocomplete support.
+Provides standard CRUD operations, validation, centralized error handling, and a thin transport API layer compatible with Next.js App Router.
+The autocomplete endpoint allows efficient querying of task names for frontend typeahead inputs.
+Maintains consistent architecture and error handling patterns with Project and TimeEntry modules.
+
+### Changes
+
+        new file:   app/api/tasks/autocomplete/route.ts
+        modified:   src/api/tasks/task.api.ts
+        modified:   src/core/repositories/task.repository.ts
+        modified:   src/core/services/task.service.ts
+
+### Result Summary
+
+1. Autocomplete Implementation:
+
+- Repository: searchByName(query: string) — пошук по підрядку у name, сортування по імені, маппінг на domain
+
+- Service: getTasksAutocomplete(query: string) — trims query; пустий рядок → повертає всі задачі (через getAll()); інакше делегує taskRepo.searchByName(query)
+
+- API: handleGetTasksAutocomplete(req) — читає query з req.nextUrl.searchParams.get('query'), try/catch + mapErrorToHttp, повертає { success: true, data } / { success: false, error, code? }
+
+- Route: app/api/tasks/autocomplete/route.ts — GET /api/tasks/autocomplete?query=…
+
+2. API Envelope:
+
+- Успіх:
+
+```json
+{
+"success": true,
+"data": TaskName[]
+}
+```
+
+- Помилка:
+
+```json
+{
+"success": false,
+"error": string,
+"code"?: string
+}
+```
+
+3. Autocomplete behavior:
+
+- Повертає всі TaskName, де name містить підрядок query (trimmed)
+
+- Якщо query відсутній або пустий — повертає всі TaskName
+
+### Notes
+
+- Реалізація production-ready:
+  - Централізована обробка помилок через mapErrorToHttp
+
+  - Консистентний формат відповіді для фронтенду
+
+  - Сильна TypeScript типізація
+
+- Збережено узгодженість з Project та TimeEntry API
+
+- Autocomplete endpoint готовий для typeahead та швидкого пошуку
+
+- Тонкий API-шар: лише парсинг, валідація, делегування сервісу
+
+- Бізнес-логіка та валідація (trim, унікальність імені) залишаються в сервісі
+
+- Всі хендлери модульні та unit-тестовані окремо
+
+- Підтримується масштабування: додавання нових полів, маршрутів чи методів сервісу без порушення існуючого API
