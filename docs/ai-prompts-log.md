@@ -1661,3 +1661,210 @@ This establishes a stable state foundation required for timer handling, grouping
 - report generation
 
 ---
+
+## [2026-02-15] — Example
+
+Tool: Cursor
+Model: Auto (Cursor default model selection)
+Scope: Multi-file generation
+
+### Prompt
+
+Implement a pure utility function inside:
+
+src/core/utils/groupTimeEntriesByProject.ts
+
+Requirements:
+
+1. Purpose
+
+Create a pure function that groups TimeEntry entities by project
+and calculates total duration per project.
+
+This utility must contain NO React code, NO side effects,
+and NO API calls.
+
+2. Function Signature
+
+Export a named function:
+
+groupTimeEntriesByProject(
+entries: TimeEntry[],
+projects: Project[]
+): GroupedTimeEntries[]
+
+3. Types
+
+Import:
+
+- TimeEntry from src/core/domain/timeEntry
+- Project from src/core/domain/project
+
+Define and export a return type:
+
+type GroupedTimeEntries = {
+projectId: string;
+projectName: string;
+projectColor?: string;
+entries: TimeEntry[];
+totalMinutes: number;
+};
+
+4. Behavior
+
+- Group entries by projectId
+- Match each group with corresponding Project
+- If a project is missing, fallback to:
+  projectName: "Unknown Project"
+- Calculate totalMinutes as:
+  sum of entry.durationMinutes
+
+- Preserve original entry order inside each group
+
+5. Sorting
+
+Sort resulting groups by:
+
+- totalMinutes DESC (largest first)
+
+6. Edge Cases
+
+- If entries array is empty → return empty array
+- If project not found → still include group
+- Ignore entries without projectId only if projectId is null/undefined
+
+7. Constraints
+
+- Must be a pure function
+- No mutation of input arrays
+- No external libraries
+- Clean, readable TypeScript
+- No single-letter variable names
+- Add short JSDoc description
+
+Goal:
+
+Produce a reusable, domain-level transformation utility
+that will later support:
+
+- Today view grouping
+- Report generation
+- CSV export
+
+### Purpose
+
+Introduce a domain-level data transformation utility responsible for grouping TimeEntry entities by project.
+
+This step stabilizes the data-processing layer before implementing UI grouping,
+report aggregation, and CSV export.
+
+By isolating grouping logic into a pure utility function, we:
+
+- Prevent business logic leakage into React components
+- Enable reuse across Today view and Reports
+- Reduce complexity inside hooks
+- Minimize risk before implementing timer state orchestration
+
+This utility becomes a foundational building block for all aggregated time calculations in the application.
+
+### Changes
+
+        new file:   src/core/utils/groupTimeEntriesByProject.ts
+
+### Result Summary
+
+Implemented groupTimeEntriesByProject utility in src/core/utils/groupTimeEntriesByProject.ts.
+
+The utility:
+
+- Groups TimeEntry entities by projectId
+
+- Resolves project metadata (name, color) from the provided projects list
+
+- Falls back to "Unknown Project" when a project is not found
+
+- Computes totalMinutes per group by deriving duration from startedAt and endedAt
+
+- Preserves original entry order within each group
+
+- Sorts groups by totalMinutes in descending order
+
+- Skips entries with missing projectId
+
+The function is fully pure:
+
+- No React dependencies
+
+- No side effects
+
+- No input mutation
+
+- No external libraries
+
+This utility is reusable across:
+
+- Today view grouping
+
+- Report aggregation
+
+- CSV export generation
+
+Architecture boundary preserved:
+
+UI → hook → domain utils → service → API → backend
+
+### Notes
+
+1. Correct domain placement
+
+The logic lives in core/utils, which is the correct layer for pure data transformations.
+No leakage into hooks or UI — this is exactly what clean architecture expects.
+
+2. Defensive duration calculation
+
+Since TimeEntry does not expose durationMinutes, deriving it from startedAt/endedAt is correct and keeps the domain model unchanged.
+
+However:
+
+⚠ This creates implicit business logic duplication if the backend also calculates duration.
+
+Long-term cleaner solution:
+
+- Either persist durationMinutes in DB
+
+- Or expose it in API DTO
+
+For this test task — current solution is acceptable and safe.
+
+3. Deterministic behavior
+
+- Stable sorting
+
+- Explicit fallback for missing projects
+
+- Explicit handling of missing dates
+
+No hidden assumptions.
+
+4. Future-proofing
+
+If later:
+
+- Active timer entries have no endedAt
+
+- Or reports span large datasets
+
+This utility still behaves predictably (entries without end date contribute 0).
+
+5. Risk level
+
+Extremely low.
+
+This was the correct next step before introducing:
+
+- Active timer orchestration
+
+- Period filtering
+
+- Report generation
+  ...
