@@ -1662,7 +1662,7 @@ This establishes a stable state foundation required for timer handling, grouping
 
 ---
 
-## [2026-02-15] — Example
+## [2026-02-15] — groupTimeEntriesByProject Utility
 
 Tool: Cursor
 Model: Auto (Cursor default model selection)
@@ -1870,7 +1870,7 @@ This was the correct next step before introducing:
 
 ---
 
-## [2026-02-15] — Example
+## [2026-02-15] — filterTimeEntriesByPeriod Utility
 
 Tool: Cursor
 Model: Auto (Cursor default model selection)
@@ -2031,5 +2031,199 @@ This utility now enables consistent period-based filtering for:
    The function is pure, side-effect free, and easily testable.
    It safely prepares the foundation for report aggregation
    and UI period switching before introducing active timer complexity.
+
+---
+
+## [2026-02-15] — useActiveTimer Hook
+
+Tool: Cursor
+Model: Auto (Cursor default model selection)
+Scope: Single-file generation
+
+### Prompt
+
+Implement a React hook:
+
+src/hooks/useActiveTimer.ts
+
+Requirements:
+
+1. Purpose
+
+Provide state orchestration for the currently active time entry.
+
+This hook must:
+
+- Use timeEntryService
+- Not contain UI logic
+- Not contain grouping or period filtering logic
+- Not duplicate backend business rules
+
+2. State
+
+Manage:
+
+- activeEntry: TimeEntry | null
+- isLoading: boolean
+- error: string | null
+
+3. Initialization
+
+On mount:
+
+- Fetch all time entries via timeEntryService.getTimeEntries()
+- Determine active entry as the one with no endedAt
+- If none found → activeEntry = null
+
+Do NOT introduce a new backend endpoint.
+
+4. Exposed API
+
+Return:
+
+{
+activeEntry,
+isLoading,
+error,
+startTimer,
+stopTimer,
+refresh,
+}
+
+5. startTimer(description: string, projectId: string)
+
+- Call timeEntryService.startTimer
+- Set activeEntry from response
+- Handle 409 (ActiveTimerExistsError) via error state
+- Do not silently ignore errors
+
+6. stopTimer()
+
+- If no activeEntry → do nothing
+- Call timeEntryService.stopTimer(activeEntry.id)
+- After success → set activeEntry to null
+- Do not reload entire entries list
+
+7. refresh()
+
+- Re-fetch entries
+- Recalculate activeEntry
+
+8. Stability
+
+- Memoize callbacks
+- Avoid infinite loops
+- No optimistic updates
+- No setInterval
+- No real-time ticking logic (UI will handle display updates)
+
+9. Constraints
+
+- Use async/await
+- Clean readable TypeScript
+- No single-letter variable names
+- Short JSDoc on exported hook
+- No side effects outside React lifecycle
+
+Goal:
+
+Create a predictable and minimal active timer orchestration layer
+that relies on backend consistency (single active entry rule)
+without introducing derived complexity.
+
+### Purpose
+
+Introduce a dedicated state orchestration hook responsible for managing the currently active time entry.
+
+This step isolates timer state from the general TimeEntry list logic,
+reducing complexity and preventing business logic leakage into UI components.
+
+By implementing useActiveTimer as a focused orchestration layer, we:
+
+- Rely on backend enforcement of the single active timer rule
+- Avoid duplicating validation logic on the frontend
+- Keep timer lifecycle management predictable
+- Minimize risk before integrating timer controls into UI
+
+This hook becomes the controlled entry point for starting,
+stopping, and synchronizing the active timer state
+across the application.
+
+### Changes
+
+        new file:   src/hooks/useActiveTimer.ts
+
+### Result Summary
+
+Implemented `useActiveTimer` hook in `src/hooks/useActiveTimer.ts`.
+
+The hook provides dedicated orchestration for managing the currently active TimeEntry.
+
+It:
+
+- Manages `activeEntry`, `isLoading`, and `error` state
+- Initializes by fetching all time entries and deriving the active entry (no `endedAt`)
+- Exposes:
+  - startTimer(description, projectId)
+  - stopTimer()
+  - refresh()
+- Updates `activeEntry` directly from backend responses (no optimistic assumptions)
+- Does not introduce additional backend endpoints
+- Avoids full list reload on stop (minimal state mutation)
+- Keeps all timer lifecycle logic isolated from UI and grouping logic
+
+Architecture boundary preserved:
+
+UI → useActiveTimer → timeEntryService → API → backend
+
+This closes the active timer orchestration layer while relying on backend enforcement of the single-active-entry rule.
+
+### Notes
+
+1. Backend-driven consistency
+
+   The hook correctly relies on backend enforcement of the single active timer rule.
+   No frontend duplication of validation logic.
+   This minimizes state divergence risk.
+
+2. Controlled initialization strategy
+
+   Active entry is derived from a full fetch on mount.
+   This guarantees correct state after refresh or hard reload,
+   avoiding “ghost timers” in UI.
+
+3. Minimal state mutation
+
+   stopTimer() does not trigger a full reload.
+   It trusts backend response and clears local state,
+   reducing unnecessary network churn.
+
+4. No premature complexity
+   - No polling
+   - No setInterval
+   - No ticking logic
+   - No optimistic updates
+
+   This is correct at this stage.
+   Real-time display can be handled purely at the UI layer.
+
+5. Known trade-off
+
+   Using getTimeEntries() to derive active entry is safe
+   but slightly inefficient if dataset grows large.
+   For this test task, this is acceptable.
+   A future optimization could introduce a dedicated `/active` endpoint.
+
+6. Risk level assessment
+
+   Medium complexity, low instability risk.
+
+   The implementation avoids:
+   - race conditions in local state
+   - timer drift logic
+   - inconsistent lifecycle transitions
+
+   The most dangerous layer (active timer orchestration)
+   is now stable and predictable.
 
 ---
