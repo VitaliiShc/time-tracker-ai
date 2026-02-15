@@ -1,25 +1,25 @@
 import type { NextRequest } from 'next/server';
 import {
-  handleDeleteEntry,
-  handleGetEntry,
-  handleUpdateEntry,
-} from '../../../../src/api/time-entries/timeEntry.api';
-
-type RouteContext = { params: Promise<{ id: string }> };
+  handleDeleteProject,
+  handleGetProject,
+  handleUpdateProject,
+} from '@/api/projects/project.api';
 
 export const runtime = 'nodejs';
 
+type RouteContext = { params: Promise<{ id: string }> };
+
 export async function GET(req: NextRequest, context: RouteContext) {
   const { id } = await context.params;
-  return handleGetEntry(req, id);
+  return handleGetProject(req, id);
 }
 
 export async function PATCH(req: NextRequest, context: RouteContext) {
   const { id } = await context.params;
-  return handleUpdateEntry(req, id);
+  return handleUpdateProject(req, id);
 }
 
 export async function DELETE(req: NextRequest, context: RouteContext) {
   const { id } = await context.params;
-  return handleDeleteEntry(req, id);
+  return handleDeleteProject(req, id);
 }

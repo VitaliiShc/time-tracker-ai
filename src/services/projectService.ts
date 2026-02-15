@@ -18,7 +18,7 @@ export async function getProjects(): Promise<Project[]> {
  */
 export async function createProject(data: {
   name: string;
-  color: string;
+  color?: string;
 }): Promise<Project> {
   return apiRequest<Project>(BASE, {
     method: 'POST',
@@ -34,7 +34,7 @@ export async function createProject(data: {
  */
 export async function updateProject(
   id: string,
-  data: Partial<Pick<Project, 'name' | 'color'>>
+  data: Partial<Pick<Project, 'name' | 'color'>>,
 ): Promise<Project> {
   return apiRequest<Project>(`${BASE}/${id}`, {
     method: 'PATCH',

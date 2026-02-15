@@ -11,9 +11,11 @@ import type { Period } from '../../../../src/core/utils/filterTimeEntriesByPerio
 import { groupTimeEntriesByProject } from '../../../../src/core/utils/groupTimeEntriesByProject';
 import { mapErrorToHttp } from '../../../../src/api/utils/errorMapper';
 
+export const runtime = 'nodejs';
+
 const timeEntryService = new TimeEntryService(
   new TimeEntryRepository(),
-  new ProjectRepository()
+  new ProjectRepository(),
 );
 const projectService = new ProjectService(new ProjectRepository());
 
@@ -33,7 +35,8 @@ function prismaToDomainEntry(entry: PrismaTimeEntry): TimeEntry {
 
 function formatDurationMinutes(start: Date, end: Date | undefined): string {
   if (end == null) return '00:00';
-  const startMs = start instanceof Date ? start.getTime() : new Date(start).getTime();
+  const startMs =
+    start instanceof Date ? start.getTime() : new Date(start).getTime();
   const endMs = end instanceof Date ? end.getTime() : new Date(end).getTime();
   const minutes = Math.max(0, Math.floor((endMs - startMs) / MS_PER_MINUTE));
   const hours = Math.floor(minutes / 60);
@@ -97,7 +100,7 @@ export async function GET(req: NextRequest) {
             escapeCsvField(startStr),
             escapeCsvField(endStr),
             escapeCsvField(duration),
-          ].join(',')
+          ].join(','),
         );
       }
     }
@@ -114,8 +117,12 @@ export async function GET(req: NextRequest) {
   } catch (error) {
     const { status, body } = mapErrorToHttp(error);
     return NextResponse.json(
-      { success: false, error: body.error, ...(body.code && { code: body.code }) },
-      { status }
+      {
+        success: false,
+        error: body.error,
+        ...(body.code && { code: body.code }),
+      },
+      { status },
     );
   }
 }

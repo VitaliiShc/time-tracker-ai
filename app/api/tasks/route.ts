@@ -4,6 +4,8 @@ import {
   handleGetTasks,
 } from '../../../src/api/tasks/task.api';
 
+export const runtime = 'nodejs';
+
 export async function GET(req: NextRequest) {
   return handleGetTasks(req);
 }

@@ -71,9 +71,14 @@ export class ProjectService {
     }
     const existing = await this.projectRepo.getByName(name);
     if (existing !== null) {
-      throw new ProjectValidationError(`A project with the name "${name}" already exists.`);
+      throw new ProjectValidationError(
+        `A project with the name "${name}" already exists.`,
+      );
     }
-    return this.projectRepo.create({ name, color: data.color }) as Promise<Project>;
+    return this.projectRepo.create({
+      name,
+      color: data.color,
+    }) as Promise<Project>;
   }
 
   /**

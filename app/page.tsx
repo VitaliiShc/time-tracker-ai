@@ -1,5 +1,5 @@
-import { Timer } from '../src/components/Timer';
-import { TimeEntryList } from '../src/components/TimeEntryList';
+import { Timer } from '@/components/Timer';
+import { TimeEntryList } from '@/components/TimeEntryList';
 
 export default function HomePage() {
   return (

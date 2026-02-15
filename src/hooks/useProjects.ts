@@ -34,7 +34,7 @@ export function useProjects() {
   const reload = useCallback(() => loadProjects(), [loadProjects]);
 
   const createProject = useCallback(
-    async (input: { name: string; color: string }) => {
+    async (input: { name: string; color?: string }) => {
       setError(null);
       try {
         await projectService.createProject(input);

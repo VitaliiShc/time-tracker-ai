@@ -5,6 +5,8 @@ import {
   handleSearchTaskNames,
 } from '../../../src/api/task-names/taskName.api';
 
+export const runtime = 'nodejs';
+
 export async function GET(req: NextRequest) {
   const taskNames = await handleSearchTaskNames(req);
   return NextResponse.json(taskNames);
@@ -14,4 +16,3 @@ export async function POST(req: NextRequest) {
   const taskName = await handleRecordTaskNameUsage(req);
   return NextResponse.json(taskName, { status: 201 });
 }
-

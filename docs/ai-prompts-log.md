@@ -3267,3 +3267,267 @@ This completes the reporting workflow and fulfills CSV export requirements.
    For this application scope, current solution is robust and clean.
 
 ---
+
+## [2026-02-15] — App Shell: Navigation + Pages + Projects UI
+
+Tool: ChatGPT
+Model: GPT-5
+Scope: Multi-file generation
+
+### Prompt
+
+Implement a minimal but useful app shell with navigation and pages for the time tracker.
+
+Requirements:
+
+1. Navigation
+
+- Add a top navigation bar with links:
+  - Dashboard → /
+  - Projects → /projects
+  - Reports → /reports
+- Highlight active route.
+- Tailwind styling, clean and minimal.
+
+2. Pages
+
+- app/page.tsx (Dashboard)
+  - Render <Timer /> and <TimeEntryList /> in a centered container.
+
+- app/projects/page.tsx (Projects)
+  - Implement a minimal CRUD UI using useProjects (NO fetch directly):
+    - Create form: name (required), color (optional, type="color")
+    - List projects with color dot + name
+    - Inline edit per row (name + color) with Save/Cancel
+    - Delete with confirm()
+
+- app/reports/page.tsx (Reports)
+  - Render <Reports /> in the same container style.
+
+3. Hook/service typing fix (small, to prevent TS/runtime issues)
+
+- Ensure createProject accepts optional color:
+  - createProject(input: { name: string; color?: string })
+- Keep updateProject accepting Partial name/color.
+
+Constraints:
+
+- Tailwind only
+- No single-letter variable names
+- No direct fetch in components
+- No backend changes
+- Keep code readable and minimal
+
+### Purpose
+
+Ship a usable application shell so the implemented features (Timer, Today list, Reports, CSV export) are accessible through real pages with navigation.
+
+This step reduces product risk by:
+
+- enabling end-to-end manual testing through a realistic user flow,
+- providing a clear IA (Dashboard / Projects / Reports),
+- keeping logic boundaries intact (UI → hooks → services → API),
+- and implementing the minimum Projects management UI required by the spec.
+
+Additionally, it fixes a small typing inconsistency (optional project color) to prevent UI/runtime issues during CRUD actions.
+
+### Result Summary
+
+After implementing the App Shell, a debugging pass was required to restore end-to-end functionality (Projects CRUD + API envelope consistency).
+
+Key fixes and outcomes:
+
+1. **Projects API route envelope fixed (critical)**
+
+- `/api/projects` GET/POST was returning `{}` due to double-wrapping a `NextResponse` in `app/api/projects/route.ts`.
+- Updated `app/api/projects/route.ts` to directly return the `NextResponse` returned by `handleListProjects` / `handleCreateProject`.
+- Result: `GET /api/projects` now returns the expected envelope `{ success: true, data: [...] }`.
+
+2. **Project creation logic implemented**
+
+- `src/api/projects/project.api.ts` initially had a placeholder implementation that always created a `"placeholder"` project, blocking real creation via unique name validation.
+- Implemented real request-body parsing for create, and removed placeholder behavior.
+- Added a safe default color when `color` is missing to match `CreateProjectInput` type requirements.
+
+3. **Projects [id] API routes added and corrected**
+
+- Implemented `app/api/projects/[id]/route.ts` for GET/PATCH/DELETE using the existing API-layer handlers.
+- Fixed Next.js dynamic route params usage (params are a Promise in Next 16 App Router) by unwrapping with `await context.params`.
+- Result: `GET /api/projects/:id`, `PATCH`, and `DELETE` work correctly.
+
+4. **UI unblocked**
+
+- Projects can now be created and deleted via `/projects`.
+- Verified that `GET /api/projects/:id` returns `{ success: true, data: {...} }` for an existing project.
+
+Overall outcome: Projects CRUD works end-to-end, API responses follow a consistent envelope, and the App Shell pages are now usable for manual testing of the full flow (Projects → Dashboard timer → Reports).
+
+### Notes
+
+- **Root cause of `{}` responses:** `app/api/projects/route.ts` was serializing a `NextResponse` object by wrapping it again with `NextResponse.json(...)`, which produced `{}`. Fix was to return the handler response directly.
+- **Placeholder project:** The placeholder was not a seed; it was created by the temporary `handleCreateProject` implementation. Once DELETE started working, it could be removed via the UI.
+- **Next.js 16 dynamic params:** In App Router API routes, `context.params` may be a Promise. Accessing `context.params.id` synchronously triggers a runtime error (“params is a Promise…”). Fix: `const { id } = await context.params`.
+- **Type-safety vs UX:** `CreateProjectInput` requires `color: string`, so API layer normalizes missing `color` to a default value (e.g. `#3b82f6`) to avoid widening changes across service/repository layers.
+- **Recommendation to prevent repeats:** Audit other App Router API routes to ensure they don’t double-wrap `NextResponse` and that `[id]` routes unwrap params with `await` consistently.
+
+---
+
+## [2026-02-15] — Debug Pass: Fix Projects API & CRUD
+
+Tool: ChatGPT  
+Model: GPT-5  
+Scope: Multi-file debugging & architecture correction
+
+### Prompt
+
+Debug Projects CRUD after implementing App Shell.
+
+Observed issues:
+
+- GET /api/projects returned {} instead of envelope
+- Default project "placeholder" auto-created
+- DELETE /api/projects/:id returned 500
+- GET /api/projects/:id returned INTERNAL_SERVER_ERROR
+- Next.js runtime error: params is a Promise and must be awaited
+- UI Projects page initially crashed due to inconsistent hook state
+
+Fix all issues while:
+
+- Preserving architecture (UI → hooks → services → API → service → repository → Prisma)
+- Keeping backend envelope contract intact
+- Not introducing business logic into UI
+- Avoiding breaking changes to existing domain/service layer
+
+Ensure:
+
+- Full Projects CRUD works end-to-end
+- API returns consistent { success, data } envelope
+- Dynamic route params handled correctly (Next.js 16 App Router)
+- No double-serialization of NextResponse
+
+### Purpose
+
+Restore full end-to-end functionality of Projects CRUD after App Shell integration.
+
+This debug pass ensures:
+
+- API contract consistency
+- Correct Next.js App Router usage
+- Removal of temporary placeholder logic
+- Stability of Projects page for manual QA
+- Architecture boundaries remain intact
+
+Additionally, this step reduces systemic risk by verifying that:
+
+- Dynamic API routes work correctly
+- Envelope responses are not accidentally broken
+- UI hooks receive correct data shapes
+- CRUD flows are production-ready
+
+### Changes
+
+        new file:   app/api/projects/[id]/route.ts
+        modified:   app/api/projects/route.ts
+        modified:   app/api/reports/export/route.ts
+        modified:   app/api/task-names/route.ts
+        modified:   app/api/tasks/[id]/route.ts
+        modified:   app/api/tasks/autocomplete/route.ts
+        modified:   app/api/tasks/route.ts
+        modified:   app/api/time-entries/[id]/route.ts
+        modified:   app/api/time-entries/[id]/stop/route.ts
+        modified:   app/api/time-entries/route.ts
+        modified:   app/layout.tsx
+        modified:   app/page.tsx
+        new file:   app/projects/page.tsx
+        new file:   app/reports/page.tsx
+        modified:   dev.db
+        modified:   src/api/projects/project.api.ts
+        new file:   src/components/AppNav.tsx
+        modified:   src/core/services/project.service.ts
+        modified:   src/hooks/useProjects.ts
+        deleted:    src/presentation/hooks/useProjects.ts
+        deleted:    src/presentation/hooks/useTimeEntries.ts
+        modified:   src/services/projectService.ts
+
+### Result Summary
+
+Resolved multiple runtime and architectural issues affecting Projects CRUD.
+
+1. Fixed double-wrapping of NextResponse in:
+   app/api/projects/route.ts
+
+   Previously:
+   - Route returned NextResponse.json(handlerResponse)
+   - handlerResponse was already a NextResponse
+   - Result: API returned {} instead of envelope
+
+   Now:
+   - Route returns handler response directly
+
+2. Removed placeholder project creation.
+
+   handleCreateProject initially created:
+   { name: "placeholder", color: "#000000" }
+
+   Implemented proper request body parsing and validation.
+   Projects are now created from actual client input.
+
+3. Implemented full /api/projects/[id] route.
+
+   Added GET / PATCH / DELETE handlers.
+   Fixed Next.js 16 dynamic route param handling:
+   - context.params is a Promise
+   - Must use: const { id } = await context.params
+
+4. Verified full CRUD flow:
+   - POST /api/projects → returns { success: true, data: {...} }
+   - GET /api/projects/:id → works
+   - DELETE /api/projects/:id → works
+   - UI reflects state correctly
+
+5. Ensured CreateProjectInput typing compatibility.
+
+   Since color is required in service layer,
+   API layer normalizes missing color to a default value.
+
+System state after fix:
+
+- Projects page stable
+- Envelope contract consistent
+- App Router dynamic routes correct
+- No placeholder data
+- No 500 errors during CRUD
+
+### Notes
+
+Root Causes Identified:
+
+1. Double NextResponse serialization
+   This silently broke the API contract and returned {}.
+   Important lesson: Never wrap a NextResponse inside another NextResponse.json().
+
+2. Temporary placeholder logic accidentally persisted.
+   This caused duplicate-name validation errors and confusion.
+
+3. Next.js 16 App Router dynamic params behavior changed.
+   context.params must be awaited in route handlers.
+   Failing to do so results in runtime errors and 500 responses.
+
+4. Envelope integrity is critical.
+   Any deviation breaks frontend hooks immediately.
+
+Architectural Integrity Maintained:
+
+- No business logic moved to UI.
+- No repository logic altered.
+- No shortcuts added.
+- Clean separation preserved.
+
+Future Risk Mitigation:
+
+- Audit other dynamic routes for proper params unwrapping.
+- Ensure no API route double-wraps NextResponse.
+- Avoid temporary placeholder logic in handlers.
+- Prefer API-layer normalization over widening service-layer types.
+
+This debug pass restored architectural correctness and ensured production-level stability of the Projects domain.

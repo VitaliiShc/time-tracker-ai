@@ -4,6 +4,8 @@ import {
   handleStartTimer,
 } from '../../../src/api/time-entries/timeEntry.api';
 
+export const runtime = 'nodejs';
+
 export async function GET(req: NextRequest) {
   return handleGetEntries(req);
 }
