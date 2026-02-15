@@ -7,13 +7,25 @@ import { useTasksAutocomplete } from '../hooks/useTasksAutocomplete';
 
 /** Main timer UI: shows active timer or form to start one; uses hooks for data and actions. */
 export function Timer() {
-  const { activeEntry, error: timerError, startTimer, stopTimer } = useActiveTimer();
-  const { projects } = useProjects();
+  const {
+    activeEntry,
+    error: timerError,
+    startTimer,
+    stopTimer,
+  } = useActiveTimer();
+  // const { projects } = useProjects();
+  const {
+    projects: projectsList = [],
+    isLoading: projectsLoading,
+    error: projectsError,
+  } = useProjects();
+
   const [description, setDescription] = useState('');
   const [projectId, setProjectId] = useState('');
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
-  const { suggestions, isLoading: suggestionsLoading } = useTasksAutocomplete(description);
+  const { suggestions, isLoading: suggestionsLoading } =
+    useTasksAutocomplete(description);
 
   const startDate = activeEntry?.startedAt
     ? new Date(activeEntry.startedAt).getTime()
@@ -39,7 +51,8 @@ export function Timer() {
 
   const projectName =
     activeEntry != null
-      ? projects.find((project) => project.id === activeEntry.projectId)?.name ?? '—'
+      ? (projectsList.find((project) => project.id === activeEntry.projectId)
+          ?.name ?? '—')
       : '';
 
   const taskDisplay =
@@ -109,7 +122,10 @@ export function Timer() {
         </p>
       )}
       <div className="flex flex-col gap-1">
-        <label htmlFor="timer-task" className="text-xs font-medium text-gray-600">
+        <label
+          htmlFor="timer-task"
+          className="text-xs font-medium text-gray-600"
+        >
           Task
         </label>
         <div className="relative">
@@ -147,9 +163,22 @@ export function Timer() {
         </div>
       </div>
       <div className="flex flex-col gap-1">
-        <label htmlFor="timer-project" className="text-xs font-medium text-gray-600">
+        <label
+          htmlFor="timer-project"
+          className="text-xs font-medium text-gray-600"
+        >
           Project
         </label>
+
+        {projectsError != null && (
+          <p className="text-xs text-red-600" role="alert">
+            {projectsError}
+          </p>
+        )}
+        {projectsLoading && (
+          <p className="text-xs text-gray-500">Loading projects…</p>
+        )}
+
         <select
           id="timer-project"
           value={projectId}
@@ -157,7 +186,7 @@ export function Timer() {
           className="w-full rounded-md border border-gray-300 px-2 py-1 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
         >
           <option value="">Select project</option>
-          {projects.map((project) => (
+          {projectsList.map((project) => (
             <option key={project.id} value={project.id}>
               {project.name}
             </option>

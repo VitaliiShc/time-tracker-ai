@@ -1,15 +1,22 @@
 import { PrismaClient } from '@prisma/client';
+import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
 
 declare global {
-  // eslint-disable-next-line no-var
   var prisma: PrismaClient | undefined;
 }
 
-const prismaClient = global.prisma ?? new PrismaClient();
+function createPrismaClient(): PrismaClient {
+  const databaseUrl = process.env.DATABASE_URL;
+  if (!databaseUrl) {
+    throw new Error('DATABASE_URL is not set. Please configure it in .env');
+  }
 
-if (process.env.NODE_ENV !== 'production') {
-  global.prisma = prismaClient;
+  const adapter = new PrismaBetterSqlite3({ url: databaseUrl });
+  return new PrismaClient({ adapter });
 }
 
-export const prisma = prismaClient;
+export const prisma = global.prisma ?? createPrismaClient();
 
+if (process.env.NODE_ENV !== 'production') {
+  global.prisma = prisma;
+}
