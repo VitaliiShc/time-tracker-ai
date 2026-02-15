@@ -1867,4 +1867,169 @@ This was the correct next step before introducing:
 - Period filtering
 
 - Report generation
-  ...
+
+---
+
+## [2026-02-15] — Example
+
+Tool: Cursor
+Model: Auto (Cursor default model selection)
+Scope: Multi-file generation
+
+### Prompt
+
+Implement a pure utility function inside:
+
+src/core/utils/filterTimeEntriesByPeriod.ts
+
+Requirements:
+
+1. Purpose
+
+Create a pure function that filters TimeEntry entities
+based on a selected time period.
+
+Supported periods:
+
+- "day"
+- "week"
+- "month"
+
+2. Function Signature
+
+Export:
+
+type Period = "day" | "week" | "month";
+
+filterTimeEntriesByPeriod(
+entries: TimeEntry[],
+period: Period,
+referenceDate?: Date
+): TimeEntry[]
+
+3. Types
+
+Import TimeEntry from:
+
+src/core/domain/timeEntry
+
+4. Behavior
+
+- referenceDate defaults to new Date() if not provided
+- Filtering must be based on entry.startedAt
+- Handle both Date objects and ISO string dates safely
+
+Definitions:
+
+DAY:
+Include entries where startedAt is on the same calendar day as referenceDate.
+
+WEEK:
+Include entries within the same calendar week as referenceDate.
+Week starts on Monday.
+(ISO week standard)
+
+MONTH:
+Include entries within the same calendar month and year as referenceDate.
+
+5. Edge Cases
+
+- Empty entries → return empty array
+- Invalid or missing startedAt → exclude entry
+- Do not mutate input array
+- Must be timezone-safe (use local time, not UTC manipulation)
+
+6. Constraints
+
+- Pure function
+- No React
+- No external libraries
+- No global variables
+- No mutation of input
+- Clean readable TypeScript
+- No single-letter variable names
+- Add short JSDoc comment
+
+Goal:
+
+Produce a reusable, deterministic filtering utility
+for:
+
+- Today view
+- Weekly / Monthly reports
+- CSV export generation
+
+### Purpose
+
+Introduce a domain-level time filtering utility responsible for selecting TimeEntry entities by day, week, or month.
+
+This step stabilizes period-based data selection before implementing reporting features and UI-level aggregation.
+
+By isolating date filtering logic into a pure utility function, we:
+
+- Prevent temporal logic from leaking into hooks or components
+- Ensure consistent filtering rules across Today view and Reports
+- Reduce complexity in state orchestration
+- Minimize risk before implementing active timer logic
+
+This utility becomes a foundational building block for all period-based calculations within the application.
+
+### Changes
+
+        new file:   src/core/utils/filterTimeEntriesByPeriod.ts
+
+### Result Summary
+
+Implemented `filterTimeEntriesByPeriod` utility in `src/core/utils/filterTimeEntriesByPeriod.ts`.
+
+The utility:
+
+- Exports a `Period` type ("day" | "week" | "month")
+- Provides a pure function `filterTimeEntriesByPeriod`
+- Filters entries based on `startedAt`
+- Supports an optional `referenceDate` (defaults to current date)
+- Handles both Date objects and ISO string representations safely
+- Excludes entries with invalid or missing `startedAt`
+- Uses local time calculations (not UTC manipulation)
+- Implements ISO week logic (Monday–Sunday)
+- Avoids input mutation (uses non-mutating array methods)
+
+The function is fully deterministic and contains no side effects.
+
+This utility now enables consistent period-based filtering for:
+
+- Today view
+- Weekly and monthly reports
+- CSV export generation
+
+### Notes
+
+1. Correct domain-layer placement
+
+   The filtering logic lives in `core/utils`, ensuring that temporal logic
+   does not leak into hooks or UI components.
+
+2. Deterministic date handling
+
+   By normalizing `startedAt` via a helper and excluding invalid dates,
+   the function remains predictable and resilient to inconsistent data.
+
+3. ISO week implementation
+
+   Using Monday as the start of the week aligns with ISO standards
+   and prevents ambiguity in reporting logic.
+
+4. Local-time based comparison
+
+   Filtering is performed using local calendar boundaries
+   (getFullYear, getMonth, getDate), which is appropriate for a
+   time-tracking application intended for user-facing reporting.
+
+5. Risk level
+
+   Extremely low.
+   The function is pure, side-effect free, and easily testable.
+   It safely prepares the foundation for report aggregation
+   and UI period switching before introducing active timer complexity.
+
+---
