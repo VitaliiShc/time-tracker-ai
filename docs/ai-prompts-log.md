@@ -10,24 +10,6 @@ All architectural and structural decisions were generated using AI tools as requ
 
 ---
 
-## [2026-02-13] — Example
-
-Tool: Cursor
-Model: Auto (Cursor default model selection)
-Scope: Multi-file generation
-
-### Prompt
-
-### Purpose
-
-### Changes
-
-### Result Summary
-
-### Notes
-
----
-
 ## [2026-02-13] — Project Architecture Scaffold
 
 Tool: Cursor
@@ -1211,7 +1193,7 @@ Maintains consistent architecture and error handling patterns with Project and T
 
 ## [2026-02-14] — Frontend API Client Layer
 
-Tool: Cursor  
+Tool: Cursor
 Model: Auto (Cursor default model selection)  
 Scope: Multi-file generation
 
@@ -1384,7 +1366,7 @@ This establishes a clean transport boundary for the frontend.
 
 ## [2026-02-14] — useProjects Hook
 
-Tool: Cursor  
+Tool: Cursor
 Model: Auto (Cursor default model selection)  
 Scope: Single-file generation
 
@@ -1509,3 +1491,173 @@ UI → hook → service → API → backend
    No premature optimization.
    No optimistic updates.
    No hidden side effects.
+
+---
+
+## [2026-02-15] — useTimeEntries Hook
+
+Tool: Cursor
+Model: Auto (Cursor default model selection)
+Scope: Single-file generation
+
+### Prompt
+
+Implement a React hook `useTimeEntries` inside:
+
+src/hooks/useTimeEntries.ts
+
+Requirements:
+
+1. Purpose
+
+Provide state management and CRUD orchestration for time entries.
+This hook must use timeEntryService from:
+
+src/services/timeEntryService
+
+Do NOT use fetch directly.
+Do NOT include business logic.
+Do NOT implement timer-specific logic yet.
+
+2. State
+
+Manage:
+
+- timeEntries: TimeEntry[]
+- isLoading: boolean
+- error: string | null
+
+3. On mount
+
+Fetch all time entries.
+
+Use a stable loadTimeEntries() function with useCallback.
+Trigger it via useEffect on mount.
+
+4. Exposed API
+
+Return:
+
+{
+timeEntries,
+isLoading,
+error,
+reload,
+updateTimeEntry,
+deleteTimeEntry,
+}
+
+5. Behavior
+
+- reload(): refetch list
+- updateTimeEntry(id, data): call service, then reload
+- deleteTimeEntry(id): call service, then reload
+
+6. Error handling
+
+- Catch errors from service
+- Extract error.message
+- Set error state
+- Ensure isLoading handled correctly
+- Do not swallow errors
+
+7. Types
+
+Import TimeEntry from:
+
+src/core/domain/timeEntry
+
+8. Stability
+
+- Avoid infinite loops
+- Memoize callbacks properly
+- No single-letter variable names
+- Add short JSDoc comment for exported hook
+
+Goal:
+
+Create a predictable, production-ready state hook
+that will later support:
+
+- active timer
+- grouping by project
+- reports
+
+### Purpose
+
+Establish a structured frontend state orchestration layer for TimeEntry entities.
+
+This step ensures:
+
+- Clear separation between UI components and API transport layer
+- Validation of the previously implemented API client envelope contract
+- Predictable loading and error state handling
+- Stable CRUD refresh flow after update/delete operations
+
+It also prepares the architectural foundation required for:
+
+- Active timer implementation
+- Project-based grouping logic
+- Period-based reporting
+- CSV export functionality
+
+The objective is to stabilize the TimeEntry state layer before introducing timer-specific behavior and derived data complexity.
+
+### Changes
+
+        new file:   src/hooks/useTimeEntries.ts
+
+### Result Summary
+
+Implemented useTimeEntries hook in src/hooks/useTimeEntries.ts.
+
+The hook provides structured state orchestration for TimeEntry entities and integrates exclusively with the timeEntryService client layer.
+
+It:
+
+- Manages timeEntries, isLoading, and error state
+
+- Fetches entries automatically on mount using a stable loadTimeEntries function
+
+- Exposes reload, updateTimeEntry, and deleteTimeEntry
+
+- Ensures state consistency by refetching after mutations
+
+- Handles errors predictably without swallowing exceptions
+
+- Maintains strict separation between UI and transport logic
+
+Architecture boundary preserved:
+
+UI → hook → service → API → backend
+
+This establishes a stable state foundation required for timer handling, grouping, and reporting features.
+
+### Notes
+
+1. Consistent mutation pattern
+   All write operations follow the deterministic flow:
+   service call → controlled reload, ensuring no partial or stale state.
+
+2. Stable side-effect management
+   loadTimeEntries is memoized and used safely inside useEffect, preventing accidental infinite re-renders.
+
+3. Transport isolation preserved
+   The hook does not leak fetch logic or API concerns into UI components.
+
+4. Predictable error handling
+   Errors are captured and normalized into the error state, keeping rendering logic simple and explicit.
+
+5. Foundation for next layers
+   The hook is intentionally minimal and avoids premature optimization (no optimistic updates, no derived logic).
+   This keeps the state layer stable before introducing:
+
+- active timer logic
+
+- grouping by project
+
+- period-based filtering
+
+- report generation
+
+---
