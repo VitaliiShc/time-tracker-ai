@@ -2431,3 +2431,204 @@ This completes the primary user interaction flow for time tracking.
    - Clear separation of concerns
 
 ---
+
+## [2026-02-15] — TimeEntryList (Read-Only + Grouping)
+
+Tool: Cursor
+Model: Auto (Cursor default model selection)
+Scope: Single-file generation
+
+### Prompt
+
+Implement a React component:
+
+src/components/TimeEntryList.tsx
+
+Requirements:
+
+1. Purpose
+
+Create a read-only list of today's time entries,
+grouped by project.
+
+This component must use:
+
+- useTimeEntries
+- useProjects
+- filterTimeEntriesByPeriod
+- groupTimeEntriesByProject
+
+Do NOT implement edit or delete functionality yet.
+Do NOT fetch data directly.
+
+2. Data Flow
+
+- Get all entries via useTimeEntries
+- Filter entries using:
+
+  filterTimeEntriesByPeriod(entries, "day")
+
+- Group filtered entries using:
+
+  groupTimeEntriesByProject(filteredEntries, projects)
+
+3. Display Structure
+
+For each project group:
+
+- Show project name
+- Show project color indicator (small colored circle)
+- Show totalMinutes formatted as HH:MM
+
+Inside each group:
+
+- List entries
+- For each entry show:
+  - Task description (notes or description fallback)
+  - Start time (HH:MM)
+  - End time (HH:MM or "—" if active)
+  - Duration formatted as HH:MM
+
+4. Formatting
+
+Implement small helper functions inside component:
+
+- formatTime(date)
+- formatDuration(minutes)
+
+No external libraries.
+
+5. Loading / Error
+
+- Show loading state
+- Show error from useTimeEntries
+- If no entries → show "No entries today"
+
+6. Styling
+
+- Use Tailwind
+- Clean layout
+- Clear visual grouping
+- No complex UI
+
+7. Constraints
+
+- No single-letter variables
+- Clean TypeScript
+- Short JSDoc on component
+- No mutation of data
+- No business logic
+- No inline editing
+
+Goal:
+
+Create a stable read-only aggregation UI
+that validates grouping and period filtering
+before adding editing complexity.
+
+### Purpose
+
+Introduce a read-only TimeEntryList component that aggregates and displays today's time entries grouped by project.
+
+This step validates:
+
+- Period filtering correctness
+- Grouping aggregation logic
+- Total duration calculations
+- Data flow integration between hooks and domain utilities
+
+By implementing a read-only version first, we:
+
+- Minimize UI complexity
+- Avoid mutation-related bugs
+- Stabilize aggregation logic before introducing inline editing
+
+This component represents a low-risk integration layer
+between state orchestration and domain utilities,
+ensuring the reporting foundation is reliable.
+
+### Changes
+
+        new file:   src/components/TimeEntryList.tsx
+
+### Result Summary
+
+Implemented `TimeEntryList` component in `src/components/TimeEntryList.tsx`.
+
+The component provides a read-only view of today's time entries grouped by project.
+
+Data flow:
+
+- Retrieves data via `useTimeEntries` and `useProjects`
+- Filters entries using `filterTimeEntriesByPeriod(..., "day")`
+- Groups filtered entries using `groupTimeEntriesByProject`
+- Uses `useMemo` to avoid unnecessary regrouping
+
+UI behavior:
+
+- Displays grouped entries by project
+- Shows project color indicator and total duration (HH:MM)
+- Renders each entry with:
+  - Task description (notes → description fallback → "—")
+  - Start time (HH:MM)
+  - End time (HH:MM or "—" if active)
+  - Duration (HH:MM), using current time for active entries
+
+Includes:
+
+- Loading state
+- Error state
+- Empty state ("No entries today")
+- Small internal `TimeEntryRow` subcomponent for clean structure
+
+The component contains no business logic and no data mutation.
+
+Architecture preserved:
+
+UI → hooks → domain utils → service → API → backend
+
+### Notes
+
+1. Correct integration of domain utilities
+
+   Period filtering and grouping are executed outside UI logic.
+   The component only composes and renders derived data.
+
+2. useMemo usage
+
+   Grouping is wrapped in useMemo with correct dependencies.
+   Prevents unnecessary recomputation on every render.
+
+3. Active entry duration handling
+
+   Active entries compute duration using "now" at render time.
+   This avoids mutating state and keeps logic purely representational.
+
+4. Defensive task text resolution
+
+   Supporting both `notes` and `description` prevents runtime errors
+   due to naming inconsistencies between frontend and backend.
+
+   Long-term improvement:
+   Align API and domain field naming to remove fallback logic.
+
+5. Clean separation of concerns
+   - No editing logic
+   - No delete logic
+   - No API calls
+   - No domain mutation
+
+   This keeps the component stable and low-risk.
+
+6. UX stability
+
+   Clear states for:
+   - loading
+   - error
+   - empty data
+
+   Reduces ambiguity and improves perceived quality.
+
+Risk level: Low.
+The component validates the full aggregation pipeline
+without introducing mutation complexity.
