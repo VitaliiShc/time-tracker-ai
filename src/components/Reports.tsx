@@ -10,7 +10,7 @@ type Period = 'day' | 'week' | 'month';
 
 /**
  * Reporting view that displays grouped time entries for a selected period (day, week, or month).
- * Read-only; no inline editing or CSV export.
+ * Read-only; supports CSV export via backend route.
  */
 export function Reports() {
   const [selectedPeriod, setSelectedPeriod] = useState<Period>('day');
@@ -49,6 +49,8 @@ export function Reports() {
     );
   }
 
+  const exportCsvUrl = `/api/reports/export?period=${selectedPeriod}`;
+
   if (filteredEntries.length === 0) {
     return (
       <div className="space-y-4">
@@ -73,9 +75,18 @@ export function Reports() {
               </button>
             ))}
           </div>
-          <span className="text-lg font-semibold text-gray-700">
-            {formatDuration(grandTotalMinutes)}
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="text-lg font-semibold text-gray-700">
+              {formatDuration(grandTotalMinutes)}
+            </span>
+            <a
+              href={exportCsvUrl}
+              className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50"
+              aria-label={`Export report for ${selectedPeriod} as CSV`}
+            >
+              Export CSV
+            </a>
+          </div>
         </div>
         <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-6 text-center text-gray-500">
           No entries for selected period
@@ -107,9 +118,18 @@ export function Reports() {
             </button>
           ))}
         </div>
-        <span className="text-lg font-semibold text-gray-700">
-          {formatDuration(grandTotalMinutes)}
-        </span>
+        <div className="flex items-center gap-3">
+          <span className="text-lg font-semibold text-gray-700">
+            {formatDuration(grandTotalMinutes)}
+          </span>
+          <a
+            href={exportCsvUrl}
+            className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50"
+            aria-label={`Export report for ${selectedPeriod} as CSV`}
+          >
+            Export CSV
+          </a>
+        </div>
       </div>
       <div className="space-y-4">
         {grouped.map((group) => (

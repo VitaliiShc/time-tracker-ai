@@ -3065,3 +3065,203 @@ This completes the reporting aggregation layer without introducing CSV export co
    - Does not duplicate domain rules
 
    It validates the reporting foundation before CSV export.
+
+---
+
+## [2026-02-15] — CSV Export (Reports)
+
+Tool: Cursor
+Model: Auto (Cursor default model selection)
+Scope: Multi-file generation
+
+### Prompt
+
+Implement CSV export functionality for Reports.
+
+PART 1 — Backend
+
+Create a new API route:
+
+/api/reports/export
+
+Behavior:
+
+1. Accept query parameter:
+
+?period=day | week | month
+
+Default: day
+
+2. Fetch all time entries and projects using existing services
+3. Use existing utilities:
+
+- filterTimeEntriesByPeriod
+- groupTimeEntriesByProject
+
+4. Generate CSV string with structure:
+
+Project, Task, Start, End, Duration (HH:MM)
+
+For each entry (not grouped summary rows).
+
+5. Response:
+
+- Content-Type: text/csv
+- Content-Disposition: attachment; filename="report-{period}.csv"
+- Status 200
+
+6. Do NOT use external CSV libraries.
+7. Properly escape commas and quotes in task descriptions.
+
+PART 2 — Frontend Integration
+
+Update:
+
+src/components/Reports.tsx
+
+Add:
+
+- "Export CSV" button
+- On click:
+  - Redirect browser to:
+
+    /api/reports/export?period=${selectedPeriod}
+
+- Do not fetch via JS
+- Let browser handle file download
+
+Constraints:
+
+- Clean TypeScript
+- No business logic in UI
+- Reuse existing services on backend
+- No duplication of grouping/filtering logic
+- Short JSDoc on backend handler
+
+Goal:
+
+Implement robust CSV export
+using backend-driven aggregation
+without leaking formatting logic into UI.
+
+### Purpose
+
+Introduce CSV export capability for the Reports feature using a backend-driven implementation.
+
+This step ensures:
+
+- Data aggregation remains centralized in the backend
+- UI remains free of formatting and serialization logic
+- Reporting logic is consistent across visual view and exported output
+- CSV generation scales independently from frontend complexity
+
+By implementing export at the API layer, we preserve architectural boundaries and maintain a clean separation between presentation, aggregation, and data serialization.
+
+This completes the reporting workflow and finalizes functional requirements of the time tracker.
+
+### Changes
+
+        modified:   docs/ai-prompts-log.md
+        modified:   src/components/Reports.tsx
+
+### Result Summary
+
+Implemented CSV export functionality for Reports using a backend-driven approach.
+
+Part 1 — Backend
+
+Created new API route:
+
+app/api/reports/export/route.ts
+
+Features:
+
+- GET /api/reports/export?period=day|week|month (default: day)
+- Loads entries and projects via existing services
+- Maps Prisma models to domain types
+- Reuses:
+  - filterTimeEntriesByPeriod
+  - groupTimeEntriesByProject
+- Generates CSV with structure:
+
+  Project, Task, Start, End, Duration (HH:MM)
+
+- Outputs one row per entry (no summary rows)
+- Properly escapes commas, quotes, and newlines
+- Returns:
+  - Content-Type: text/csv
+  - Content-Disposition: attachment; filename="report-{period}.csv"
+- Uses centralized error handling (mapErrorToHttp)
+
+Part 2 — Frontend
+
+Updated `Reports.tsx`:
+
+- Added "Export CSV" link/button
+- Uses direct browser navigation to:
+  /api/reports/export?period=${selectedPeriod}
+- No client-side CSV generation
+- URL computed once and reused
+- Export button visible in both populated and empty states
+
+Architecture preserved:
+
+UI → redirect → API route → service → domain utilities → CSV serialization
+
+This completes the reporting workflow and fulfills CSV export requirements.
+
+### Notes
+
+1. Backend-driven serialization
+
+   CSV generation lives entirely on the backend.
+   UI does not handle formatting or serialization,
+   preserving architectural boundaries.
+
+2. Reuse of aggregation logic
+
+   No duplication of filtering or grouping logic.
+   Reports view and CSV export rely on the same domain utilities,
+   ensuring consistent totals and period rules.
+
+3. Proper CSV escaping
+
+   escapeCsvField() correctly handles:
+   - Commas
+   - Double quotes (escaped as "")
+   - Newlines
+
+   This prevents malformed CSV when task descriptions contain special characters.
+
+4. No summary rows
+
+   CSV includes one row per entry.
+   This keeps file structure simple and machine-readable.
+
+   Future improvement (optional):
+   Add a summary row at the bottom.
+
+5. Browser-native download
+
+   Using an anchor link instead of fetch:
+   - Simpler implementation
+   - No blob handling
+   - No extra memory usage
+   - Leverages native download behavior
+
+6. Error handling
+
+   Errors are returned as JSON via mapErrorToHttp.
+   Browser will display error if route fails,
+   which is acceptable for this test scope.
+
+7. Risk assessment
+
+   Low risk.
+
+   Potential edge cases:
+   - Very large datasets (memory usage)
+   - Timezone interpretation differences
+   - Extremely long task descriptions
+
+   For this application scope, current solution is robust and clean.
