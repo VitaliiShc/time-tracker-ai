@@ -2632,3 +2632,209 @@ UI → hooks → domain utils → service → API → backend
 Risk level: Low.
 The component validates the full aggregation pipeline
 without introducing mutation complexity.
+
+---
+
+## [2026-02-15] — TimeEntryList: Inline Edit + Delete
+
+Tool: Cursor
+Model: Auto (Cursor default model selection)
+Scope: Single-file update
+
+### Prompt
+
+Update the existing component:
+
+src/components/TimeEntryList.tsx
+
+Extend it to support inline editing and deletion of time entries.
+
+Requirements:
+
+1. General Rules
+
+- Do NOT modify grouping or filtering logic
+- Do NOT move business logic into the component
+- Use updateTimeEntry and deleteTimeEntry from useTimeEntries
+- Keep architecture clean
+
+2. Delete Functionality
+
+For each entry:
+
+- Add a Delete button
+- On click:
+  - Confirm with window.confirm("Delete this entry?")
+  - Call deleteTimeEntry(entry.id)
+- Do not mutate local arrays manually
+- Rely on hook reload behavior
+
+3. Inline Edit Mode
+
+Each entry should support edit mode:
+
+State per entry:
+
+- isEditing (boolean)
+- editedDescription (string)
+- editedDuration (string in HH:MM format)
+
+4. Edit Behavior
+
+When clicking "Edit":
+
+- Switch row to edit mode
+- Show:
+  - Input for description
+  - Input for duration (HH:MM)
+  - Save and Cancel buttons
+
+5. Save Logic
+
+On Save:
+
+- Parse HH:MM duration input
+- Convert to minutes
+- Compute new endTime:
+
+  endTime = new Date(startedAt + durationMinutes)
+
+- Call updateTimeEntry(entry.id, { endTime })
+- Also update description if changed
+- Exit edit mode
+
+If parsing fails → show inline validation error.
+
+6. Cancel Logic
+
+- Revert to view mode
+- Discard changes
+
+7. Active Entry Handling
+
+- Do NOT allow editing active entries (endedAt missing)
+- Disable Edit button for active entries
+
+8. Formatting Helpers
+
+You may reuse existing formatTime / formatDuration
+Add helper:
+
+parseDurationInput("HH:MM") → number | null
+
+9. Constraints
+
+- Clean TypeScript
+- No single-letter variable names
+- Keep grouping logic intact
+- Keep component readable
+- Avoid excessive nested state
+- Do not introduce new hooks
+
+Goal:
+
+Complete CRUD functionality for TimeEntry
+while preserving clean architecture
+and minimizing UI complexity.
+
+### Purpose
+
+Extend the TimeEntryList component to support inline editing and deletion of time entries, completing full CRUD functionality.
+
+This step:
+
+- Finalizes user control over TimeEntry lifecycle
+- Validates update and delete orchestration from useTimeEntries
+- Ensures duration editing is correctly translated into domain-consistent endTime updates
+- Preserves single source of truth (duration derived from start/end)
+
+By implementing editing after stabilizing read-only grouping,
+we minimize risk and isolate mutation logic
+from aggregation and filtering concerns.
+
+This completes the core time-tracking workflow before moving to reporting and CSV export.
+
+### Changes
+
+        modified:   src/components/TimeEntryList.tsx
+
+### Result Summary
+
+Extended `TimeEntryList` to support inline editing and deletion of time entries.
+
+The component now:
+
+- Adds Delete functionality with confirmation dialog
+- Enables per-entry inline edit mode
+- Supports editing:
+  - Description
+  - Duration (HH:MM format)
+- Parses duration input and computes new `endedAt` based on `startedAt`
+- Calls `updateTimeEntry` and `deleteTimeEntry` from `useTimeEntries`
+- Relies on hook-driven reload for state consistency
+- Prevents editing of active entries
+- Displays inline validation error for invalid duration format
+
+Grouping and period filtering logic remain unchanged.
+
+Architecture preserved:
+
+UI → hook → service → API → backend
+
+This completes full CRUD functionality for TimeEntry while maintaining domain consistency (duration derived from start/end).
+
+### Notes
+
+1. Domain integrity preserved
+
+   Duration is not updated directly.
+   Instead, edited HH:MM input is converted into a new `endedAt`,
+   allowing backend logic to recalculate duration consistently.
+
+   This maintains single source of truth.
+
+2. Controlled mutation pattern
+
+   The component does not manually update local grouped arrays.
+   It relies entirely on `useTimeEntries` reload behavior,
+   preventing state desynchronization.
+
+3. Active entry protection
+
+   Editing is disabled for active entries.
+   This avoids partial mutation of running timers
+   and eliminates a high-risk edge case.
+
+4. Input validation
+
+   Duration parsing uses strict HH:MM format.
+   Invalid input is handled inline without crashing
+   or triggering backend calls.
+
+   Potential future improvement:
+   - Support H:MM or flexible parsing
+   - Add max duration validation
+
+5. UX trade-offs
+   - Using window.confirm is simple but not polished.
+   - Reload after every mutation is safe but not optimized.
+
+   For this test task, correctness > micro-optimization.
+
+6. Risk assessment
+
+   Medium complexity, low instability risk.
+
+   Possible edge cases:
+   - Editing very short durations (00:00)
+   - Editing entries across day boundaries
+   - Timezone-related drift if startedAt is not normalized
+
+   However, domain calculations are delegated to backend,
+   reducing frontend risk significantly.
+
+7. Architectural discipline maintained
+   - No business logic in UI
+   - No duplication of duration calculation rules
+   - No mutation of grouped data structures
+   - Clean separation between presentation and domain
