@@ -2838,3 +2838,230 @@ This completes full CRUD functionality for TimeEntry while maintaining domain co
    - No duplication of duration calculation rules
    - No mutation of grouped data structures
    - Clean separation between presentation and domain
+
+---
+
+## [2026-02-15] — Reports Component (Period Switch + Aggregation)
+
+Tool: Cursor
+Model: Auto (Cursor default model selection)
+Scope: Single-file generation
+
+### Prompt
+
+Implement a React component:
+
+src/components/Reports.tsx
+
+Requirements:
+
+1. Purpose
+
+Create a reporting view that allows switching between:
+
+- Day
+- Week
+- Month
+
+and displays grouped time entries for the selected period.
+
+2. Data Sources
+
+Use:
+
+- useTimeEntries
+- useProjects
+- filterTimeEntriesByPeriod
+- groupTimeEntriesByProject
+
+Do NOT fetch directly.
+Do NOT duplicate grouping logic.
+
+3. State
+
+Inside component manage:
+
+- selectedPeriod: "day" | "week" | "month"
+
+Default: "day"
+
+4. Data Flow
+
+- Filter entries by selectedPeriod
+- Group filtered entries by project
+- Compute grand total across all projects
+
+Use useMemo to avoid unnecessary recalculations.
+
+5. UI Structure
+
+Top section:
+
+- Period selector (3 buttons or segmented control)
+- Grand total (HH:MM)
+
+Below:
+
+For each project group:
+
+- Project name
+- Project color dot
+- Total per project (HH:MM)
+- Entry count
+
+Do NOT implement inline editing here.
+Read-only only.
+
+6. Formatting
+
+Reuse or implement:
+
+- formatDuration(minutes) → HH:MM
+
+No external libraries.
+
+7. Loading / Error
+
+- Show loading state
+- Show error state
+- If no entries → show "No entries for selected period"
+
+8. Constraints
+
+- Clean TypeScript
+- No single-letter variables
+- No business logic
+- No mutation
+- No CSV yet
+- Short JSDoc on component
+
+Goal:
+
+Create a stable reporting view
+based on existing domain utilities
+before implementing CSV export.
+
+### Purpose
+
+Introduce a dedicated reporting component that aggregates time entries by selected period (day, week, month).
+
+This step validates:
+
+- Period filtering correctness
+- Aggregation stability across larger datasets
+- Consistency of total duration calculations
+- Integration between hooks and domain utilities
+
+By implementing a read-only Reports view before CSV export,
+we ensure that aggregation logic is correct and stable
+without introducing additional output complexity.
+
+This component completes the reporting layer
+and prepares the foundation for CSV export functionality.
+
+### Changes
+
+        new file:   src/components/Reports.tsx
+
+### Result Summary
+
+Implemented `Reports` component in `src/components/Reports.tsx`.
+
+The component provides a read-only reporting view with selectable periods:
+
+- Day
+- Week
+- Month
+
+Data flow:
+
+- Retrieves entries via `useTimeEntries`
+- Retrieves projects via `useProjects`
+- Filters entries using `filterTimeEntriesByPeriod`
+- Groups entries using `groupTimeEntriesByProject`
+- Computes grand total across all groups
+
+All aggregation logic is composed through existing domain utilities.
+No direct data fetching or business logic was introduced.
+
+UI behavior:
+
+- Period selector (segmented control)
+- Grand total duration (HH:MM)
+- Grouped view per project:
+  - Project color indicator
+  - Project name
+  - Total duration per project
+  - Entry count
+
+Handles:
+
+- Loading state
+- Error state
+- Empty state ("No entries for selected period")
+
+Architecture preserved:
+
+UI → hooks → domain utils → service → API → backend
+
+This completes the reporting aggregation layer without introducing CSV export complexity.
+
+### Notes
+
+1. Correct reuse of domain utilities
+
+   Reports composes existing:
+   - filterTimeEntriesByPeriod
+   - groupTimeEntriesByProject
+
+   No duplication of aggregation logic.
+   This ensures consistent calculations across Today view and Reports.
+
+2. Single memoized aggregation pipeline
+
+   Filtering, grouping, and grand total computation
+   are performed inside a single useMemo block.
+
+   This prevents unnecessary recomputation
+   and keeps performance stable even with larger datasets.
+
+3. Period switching stability
+
+   Switching between Day / Week / Month
+   only changes derived data, not source state.
+
+   No additional network calls are triggered.
+   State orchestration remains predictable.
+
+4. Grand total consistency
+
+   Grand total is derived from grouped totals,
+   avoiding re-implementation of duration summation logic.
+
+   This reduces risk of aggregation mismatch.
+
+5. Edge case handling
+   - Empty entries → clear empty state
+   - Active entries without endedAt:
+     These are included in filtered data
+     only if they fall within the selected period.
+   - Cross-boundary entries (e.g. start last month, end this month):
+     Filtering is based on startedAt only.
+     This is a design decision consistent with period utility.
+
+6. Timezone considerations
+
+   Period filtering uses local calendar logic.
+   This aligns with user expectations in time tracking apps.
+   No UTC shifting is introduced at UI level.
+
+7. Risk assessment
+
+   Low risk.
+
+   The component:
+   - Does not mutate data
+   - Does not introduce new async behavior
+   - Does not duplicate domain rules
+
+   It validates the reporting foundation before CSV export.
