@@ -2227,3 +2227,207 @@ This closes the active timer orchestration layer while relying on backend enforc
    is now stable and predictable.
 
 ---
+
+## [2026-02-15] — Timer Component
+
+Tool: Cursor
+Model: Auto (Cursor default model selection)
+Scope: Single-file generation
+
+### Prompt
+
+Implement a React component:
+
+src/components/Timer.tsx
+
+Requirements:
+
+1. Purpose
+
+Create the main Timer UI component responsible for:
+
+- Displaying active timer (if any)
+- Allowing user to start a new timer
+- Allowing user to stop the active timer
+
+This component must use:
+
+- useActiveTimer
+- useProjects
+- useTasksAutocomplete (for task suggestions)
+
+Do NOT include business logic.
+Do NOT perform grouping.
+Do NOT fetch data directly.
+
+2. UI Behavior
+
+If activeEntry exists:
+
+- Show:
+  - Task description
+  - Project name (resolved via useProjects)
+  - Start time
+  - Elapsed time (computed in component from startedAt to now)
+
+- Show Stop button
+
+If no activeEntry:
+
+- Show:
+  - Input for task description
+  - Select dropdown for project
+  - Start button
+
+3. Autocomplete
+
+Use useTasksAutocomplete for suggestions.
+Basic behavior:
+
+- When user types → fetch suggestions
+- Allow selecting suggestion to fill input
+
+No advanced UI needed.
+
+4. Elapsed Time Display
+
+- Use useState + setInterval inside component
+- Update every second
+- Clear interval on unmount
+- Do not persist elapsed time in state
+- Only derive from activeEntry.startedAt
+
+5. Error Handling
+
+- Display error from useActiveTimer if present
+- Disable Start button if:
+  - description empty
+  - project not selected
+  - activeEntry exists
+
+6. Styling
+
+- Use simple Tailwind classes
+- Keep layout clean
+- No complex design needed
+
+7. Constraints
+
+- No single-letter variable names
+- Clean readable TypeScript
+- Short JSDoc comment
+- Keep component focused and minimal
+- No over-engineering
+
+Goal:
+
+Produce a clean and predictable Timer UI component
+that integrates existing hooks
+without duplicating business logic.
+
+### Purpose
+
+Introduce the primary Timer UI component responsible for user interaction with the active time tracking lifecycle.
+
+This step connects the previously implemented orchestration hooks
+(useActiveTimer, useProjects, useTasksAutocomplete)
+into a cohesive and minimal presentation layer.
+
+The objective is to:
+
+- Validate active timer state synchronization
+- Ensure correct start/stop lifecycle integration
+- Keep business rules strictly inside hooks and backend
+- Avoid complexity before introducing reports and aggregation UI
+
+This component represents the first full vertical slice:
+UI → hook → service → API → backend → DB.
+
+### Changes
+
+        new file:   src/components/Timer.tsx
+        new file:   src/hooks/useTasksAutocomplete.ts
+
+### Result Summary
+
+Implemented the main Timer vertical slice, including:
+
+- `useTasksAutocomplete` hook (src/hooks/useTasksAutocomplete.ts)
+- `Timer` UI component (src/components/Timer.tsx)
+
+The Timer component:
+
+- Displays the active timer when present:
+  - Task description (with fallback for description/notes mismatch)
+  - Project name (resolved via useProjects)
+  - Start time
+  - Live elapsed time (derived from startedAt using setInterval)
+  - Stop button
+
+- Displays start form when no active timer:
+  - Task input with autocomplete
+  - Project select dropdown
+  - Start button (with proper disabling rules)
+
+The component:
+
+- Uses only hooks (useActiveTimer, useProjects, useTasksAutocomplete)
+- Contains no business logic
+- Does not fetch data directly
+- Derives elapsed time purely from activeEntry.startedAt
+- Clears interval on unmount
+- Displays error state from useActiveTimer
+
+Architecture preserved:
+
+UI → hooks → services → API → backend → DB
+
+This completes the primary user interaction flow for time tracking.
+
+### Notes
+
+1. Vertical slice completed
+
+   This is the first fully functional feature slice:
+   Timer UI + state orchestration + backend integration.
+
+2. Controlled lifecycle management
+   - No optimistic updates
+   - No polling
+   - No timer persistence in local state
+   - Active timer derived strictly from backend state
+
+   This minimizes desynchronization risk.
+
+3. Safe elapsed time implementation
+
+   Elapsed time is derived from startedAt every second.
+   No accumulation drift.
+   Interval is properly cleared on unmount.
+
+4. Autocomplete isolation
+
+   useTasksAutocomplete is debounced and isolated,
+   preventing unnecessary API calls and avoiding UI complexity leakage.
+
+5. Defensive API compatibility
+
+   Supporting both `notes` and `description` prevents runtime crashes
+   due to backend/frontend naming mismatches.
+
+   ⚠ Long-term improvement:
+   Align domain and API field names to remove this fallback logic.
+
+6. Remaining controlled risk
+   - If timeEntry dataset grows large, deriving active entry via full fetch may become inefficient.
+   - A future `/api/time-entries/active` endpoint could optimize this.
+
+   For this test task, current implementation is stable and acceptable.
+
+7. Architecture discipline maintained
+   - No business rules in UI
+   - No grouping logic inside component
+   - No period filtering inside component
+   - Clear separation of concerns
+
+---
