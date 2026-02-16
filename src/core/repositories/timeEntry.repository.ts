@@ -1,3 +1,4 @@
+// src\core\repositories\timeEntry.repository.ts
 import { prisma } from '../db/prismaClient';
 import type { TimeEntry } from '@prisma/client';
 
@@ -13,7 +14,7 @@ export interface UpdateTimeEntryData {
   description?: string;
   projectId?: string;
   startTime?: Date;
-  endTime?: Date;
+  endTime?: Date | null;
   duration?: number;
 }
 
@@ -61,8 +62,13 @@ export class TimeEntryRepository {
         description: data.description,
         projectId: data.projectId,
         startTime: data.startTime,
-        endTime: data.endTime,
-        duration: data.duration,
+
+        // Prisma очікує endTime: Date | null (якщо поле nullable)
+        // Не передаємо undefined — ставимо null для "active".
+        endTime: data.endTime ?? null,
+
+        // Prisma очікує duration: number (не nullable)
+        duration: data.duration ?? 0,
       },
     });
   }
@@ -76,7 +82,9 @@ export class TimeEntryRepository {
         id,
       },
       data: {
-        ...(data.description !== undefined && { description: data.description }),
+        ...(data.description !== undefined && {
+          description: data.description,
+        }),
         ...(data.projectId !== undefined && { projectId: data.projectId }),
         ...(data.startTime !== undefined && { startTime: data.startTime }),
         ...(data.endTime !== undefined && { endTime: data.endTime }),

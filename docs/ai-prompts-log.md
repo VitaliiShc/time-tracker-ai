@@ -3440,7 +3440,6 @@ Additionally, this step reduces systemic risk by verifying that:
         modified:   app/page.tsx
         new file:   app/projects/page.tsx
         new file:   app/reports/page.tsx
-        modified:   dev.db
         modified:   src/api/projects/project.api.ts
         new file:   src/components/AppNav.tsx
         modified:   src/core/services/project.service.ts
@@ -3587,7 +3586,6 @@ Additionally, this step significantly reduces systemic UI-state risks before mov
 ### Changes
 
         modified:   app/globals.css
-        modified:   dev.db
         modified:   src/api/time-entries/timeEntry.api.ts
         modified:   src/components/TimeEntryList.tsx
         modified:   src/core/domain/timeEntry.ts
@@ -3678,3 +3676,186 @@ Future Risk Mitigation:
 - Audit other domains for potential API → Domain mismatch.
 
 This stabilization pass ensures production-level consistency of the TimeEntry domain and prepares the system for reliable Reports testing.
+
+---
+
+## [2026-02-16] — Reports Manual QA Verification
+
+Tool: ChatGPT  
+Model: GPT-5  
+Scope: Functional testing & behavioral verification (no code changes)
+
+---
+
+### Prompt
+
+Manually test Reports functionality after stabilizing Timer and synchronization layer.
+
+Validate:
+
+- Day / Week / Month filters
+- Boundary behavior (entries crossing midnight)
+- Timezone handling (UTC vs local time)
+- CSV export consistency
+- Duration correctness
+- Consistency between UI and exported data
+
+Ensure:
+
+- No regression introduced after timer stabilization
+- Filters operate consistently and predictably
+- CSV reflects exactly the same dataset as UI
+- Week starts on Monday
+- No envelope contract issues
+
+### Purpose
+
+Perform comprehensive manual QA of Reports domain after Timer state stabilization.
+
+This verification ensures:
+
+- Period filtering logic behaves correctly
+- Edge cases (cross-day entries) are handled consistently
+- Exported data matches visual report output
+- No hidden synchronization bugs remain
+- System is stable before finalization phase
+
+### Changes
+
+None (manual verification only).
+
+No files modified.
+
+### Result Summary
+
+Manual testing confirmed correct behavior of Reports functionality.
+
+1. Day Filter
+   - Includes entries assigned to the current day.
+   - Entries crossing midnight are assigned to the day of `endTime`.
+
+2. Week Filter
+   - Week starts on Monday.
+   - Entries correctly grouped by current week.
+   - Boundary entries handled consistently.
+
+3. Month Filter
+   - Includes all entries within current month.
+   - Excludes entries from previous month.
+   - No leakage across month boundary.
+
+4. Boundary Behavior
+   - Entry: 23:50 → 00:10
+   - Assigned to day of `endTime`.
+   - Behavior consistent across UI and CSV.
+
+5. CSV Export
+   - Row count matches UI.
+   - Duration values match UI calculations.
+   - No missing entries.
+   - ISO timestamps exported in UTC format.
+   - Encoding supports non-ASCII (Cyrillic) text.
+
+System state after verification:
+
+- Reports stable
+- Filtering logic consistent
+- CSV export reliable
+- No synchronization regressions detected
+- Ready for finalization phase
+
+### Notes
+
+Design Decision Observed:
+
+- Period assignment is based on `endTime`, not `startTime`.
+- Entries crossing midnight are fully attributed to the day they ended.
+
+This behavior is acceptable for a simplified time-tracking system and remains consistent across all period filters.
+
+Architectural Integrity Maintained:
+
+- No changes required in service layer.
+- No modifications to filter logic.
+- No changes to API routes.
+- Envelope contract remains intact.
+
+This verification completes functional validation of the Reports domain.
+
+---
+
+## [2026-02-16] — Production Build Fix: TimeEntryRepository create() strict types
+
+Tool: ChatGPT  
+Model: GPT-5  
+Scope: Single-file production build fix (TypeScript + Prisma strict)
+
+### Prompt
+
+Run `npm run build` to verify the app works in production mode.
+
+Build failed with TypeScript error in:
+
+- `src/core/repositories/timeEntry.repository.ts`
+
+Error:
+
+- Prisma `timeEntry.create()` expects `duration: number` (required), but repository passed `duration?: number | undefined`.
+- `endTime` was passed as `Date | undefined`, while the active-entry convention uses `null`.
+
+Fix the production build error while:
+
+- Preserving clean architecture boundaries (repository-only change)
+- Not changing API envelope contract
+- Not moving business logic into UI/hooks
+- Keeping service/domain layers intact
+
+### Purpose
+
+Ensure the project successfully builds and runs in production mode.
+
+This pass validates:
+
+- Prisma + TypeScript strict compatibility
+- Correct persistence-layer handling of required/nullable Prisma fields
+- Stability beyond dev mode (Turbopack build)
+
+### Changes
+
+        modified:   src/core/repositories/timeEntry.repository.ts
+
+Key change:
+
+- Normalized Prisma create input to avoid `undefined` for required/nullable fields:
+  - `duration: data.duration ?? 0`
+  - `endTime: data.endTime ?? null`
+
+### Result Summary
+
+Resolved production build failure caused by strict Prisma create input types.
+
+- `npm run build` now succeeds.
+- App successfully starts from production build output.
+- Repository layer now always provides valid Prisma create payload:
+  - Required numeric field `duration` is always a `number`.
+  - Nullable field `endTime` uses `null` for active entries instead of `undefined`.
+
+No architectural boundaries were violated:
+
+- Fix applied only in repository layer.
+- API envelope remains unchanged.
+- No changes to UI/hooks/services business logic.
+
+### Notes
+
+Root cause:
+
+- Prisma schema defines `duration` as required (non-nullable), so `undefined` is not acceptable in `create()`.
+- Active timer logic relies on `endTime = null`, but repository used `undefined`, which does not match Prisma input expectations in strict compilation.
+
+Risk mitigation:
+
+- Prefer explicit `null`/defaults in repository layer when Prisma schema requires non-optional values.
+- Re-run `npm run build` after major feature work to catch strict-mode issues early.
+
+---
