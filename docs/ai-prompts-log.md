@@ -3859,3 +3859,125 @@ Risk mitigation:
 - Re-run `npm run build` after major feature work to catch strict-mode issues early.
 
 ---
+
+## [2026-02-16] — Production Deployment Setup: Fly.io + SQLite Volume
+
+Tool: ChatGPT  
+Model: GPT-5  
+Scope: Infrastructure configuration & production preparation
+
+### Prompt
+
+Prepare the Next.js 16 + Prisma (SQLite) Time Tracker application for production deployment on Fly.io.
+
+Constraints:
+
+- Preserve clean architecture boundaries.
+- Keep SQLite (no migration to Postgres).
+- Ensure database persistence via Fly volume.
+- Run Prisma migrations in production safely.
+- Avoid unnecessary services (Tigris, Litestream replication).
+- Ensure single-machine deployment (no scaling surprises).
+- Maintain envelope-based API contract integrity.
+- Keep risk minimal (no domain-layer changes).
+
+### Purpose
+
+Transition the project from fully tested local dev mode to production-ready infrastructure configuration.
+
+Goals:
+
+- Attach persistent volume for SQLite.
+- Configure DATABASE_URL for Fly environment.
+- Ensure Prisma migrations run automatically on deploy.
+- Remove unnecessary runtime build steps.
+- Avoid duplicate migration execution.
+- Guarantee single-machine setup.
+- Prepare system for first production deployment.
+
+### Changes
+
+        new file:   .dockerignore
+        new file:   .github/workflows/fly-deploy.yml
+        new file:   Dockerfile
+        new file:   fly.toml
+        modified:   package-lock.json
+        modified:   package.json
+
+        infra:      Fly volume created (fra region)
+        infra:      DATABASE_URL secret configured
+        infra:      Removed unused gru volume
+        infra:      Ensured zero machines before first deploy
+
+### Infrastructure Decisions
+
+1. Region changed to `fra` (Europe) for latency and consistency.
+
+2. Created persistent volume:
+
+   fly volumes create data --size 1 --region fra
+
+   Mounted at:
+   /data
+
+3. DATABASE_URL set via Fly secrets:
+
+   file:/data/dev.db
+
+4. Added Prisma release command in fly.toml:
+
+   [deploy]
+   release_command = "npx prisma migrate deploy"
+
+5. Simplified Dockerfile:
+   - Removed Fly-generated Litestream setup.
+   - Removed runtime Next.js build.
+   - No ENTRYPOINT used.
+   - CMD ["npm", "start"] only.
+
+6. Ensured single machine:
+   - No scaling commands used.
+   - min_machines_running = 0
+   - No multi-region configuration.
+
+### Result Summary
+
+Infrastructure is now production-ready:
+
+- SQLite stored on persistent Fly volume.
+- Prisma migrations executed automatically on deploy.
+- No runtime build during container startup.
+- No duplicate migration execution.
+- No Litestream replication layer.
+- No Tigris bucket dependency.
+- No additional services attached.
+- No active machines before first deploy (clean state).
+
+System is ready for first `fly deploy`.
+
+### Notes
+
+Important Production Constraints:
+
+- SQLite is acceptable because this is a test assignment.
+- Volume must exist before first deploy.
+- DATABASE_URL must be provided via Fly secrets.
+- Removing release_command would require reintroducing migration logic in container.
+- EntryPoint is intentionally not used to reduce startup complexity.
+
+Architectural integrity preserved:
+
+- No business logic moved.
+- No service-layer changes.
+- No repository-layer changes.
+- No envelope modifications.
+
+Next Phase:
+
+→ Execute first production deploy.
+→ Validate persistence.
+→ Validate API contract.
+→ Validate timer & reports in production.
+→ Prepare README & final submission.
+
+---
