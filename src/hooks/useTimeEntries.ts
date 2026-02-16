@@ -7,6 +7,7 @@ import {
   updateTimeEntry as serviceUpdateTimeEntry,
   deleteTimeEntry as serviceDeleteTimeEntry,
 } from '../services/timeEntryService';
+import { onTimeEntriesChanged } from '../shared/utils/events';
 
 /**
  * Manages time entries state and CRUD orchestration via timeEntryService.
@@ -33,6 +34,14 @@ export function useTimeEntries() {
 
   useEffect(() => {
     loadTimeEntries();
+  }, [loadTimeEntries]);
+
+  useEffect(() => {
+    const unsubscribe = onTimeEntriesChanged(() => {
+      void loadTimeEntries();
+    });
+
+    return unsubscribe;
   }, [loadTimeEntries]);
 
   const reload = useCallback(() => loadTimeEntries(), [loadTimeEntries]);

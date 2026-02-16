@@ -7,6 +7,7 @@ import {
   startTimer as serviceStartTimer,
   stopTimer as serviceStopTimer,
 } from '../services/timeEntryService';
+import { emitTimeEntriesChanged } from '../shared/utils/events';
 
 /**
  * Finds the single active time entry (no endedAt) from a list.
@@ -50,6 +51,7 @@ export function useActiveTimer() {
       try {
         const entry = await serviceStartTimer({ description, projectId });
         setActiveEntry(entry);
+        emitTimeEntriesChanged();
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         setError(message);
@@ -61,14 +63,30 @@ export function useActiveTimer() {
   const stopTimer = useCallback(async () => {
     if (activeEntry == null) return;
     setError(null);
+
     try {
       await serviceStopTimer(activeEntry.id);
       setActiveEntry(null);
+      emitTimeEntriesChanged();
+      await refresh();
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
+
+      // crude but effective: your apiClient likely throws Error(message)
+      const looksLikeNotFound =
+        message.toLowerCase().includes('not found') || message.includes('404');
+
+      if (looksLikeNotFound) {
+        // Active entry no longer exists — reconcile state
+        setActiveEntry(null);
+        await refresh();
+        setError('Active entry no longer exists (it may have been deleted).');
+        return;
+      }
+
       setError(message);
     }
-  }, [activeEntry]);
+  }, [activeEntry, refresh]);
 
   return {
     activeEntry,

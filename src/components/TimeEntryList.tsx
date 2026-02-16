@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useTimeEntries } from '../hooks/useTimeEntries';
 import { useProjects } from '../hooks/useProjects';
 import { filterTimeEntriesByPeriod } from '../core/utils/filterTimeEntriesByPeriod';
@@ -15,6 +15,12 @@ export function TimeEntryList() {
   const { timeEntries, isLoading, error, updateTimeEntry, deleteTimeEntry } =
     useTimeEntries();
   const { projects } = useProjects();
+  const [nowMs, setNowMs] = useState(() => Date.now());
+
+  useEffect(() => {
+    const intervalId = setInterval(() => setNowMs(Date.now()), 1000);
+    return () => clearInterval(intervalId);
+  }, []);
 
   const grouped = useMemo(() => {
     const filtered = filterTimeEntriesByPeriod(timeEntries, 'day');
@@ -58,7 +64,9 @@ export function TimeEntryList() {
               style={{ backgroundColor: group.projectColor ?? '#9ca3af' }}
               aria-hidden
             />
-            <span className="font-medium text-gray-900">{group.projectName}</span>
+            <span className="font-medium text-gray-900">
+              {group.projectName}
+            </span>
             <span className="ml-auto text-sm text-gray-500">
               {formatDuration(group.totalMinutes)}
             </span>
@@ -68,6 +76,7 @@ export function TimeEntryList() {
               <TimeEntryRow
                 key={entry.id}
                 entry={entry}
+                nowMs={nowMs}
                 onUpdate={updateTimeEntry}
                 onDelete={deleteTimeEntry}
               />
@@ -92,11 +101,12 @@ function parseDurationInput(value: string): number | null {
 
 type TimeEntryRowProps = {
   entry: TimeEntry;
+  nowMs: number;
   onUpdate: (id: string, data: Partial<TimeEntry>) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
 };
 
-function TimeEntryRow({ entry, onUpdate, onDelete }: TimeEntryRowProps) {
+function TimeEntryRow({ entry, nowMs, onUpdate, onDelete }: TimeEntryRowProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedDescription, setEditedDescription] = useState('');
   const [editedDuration, setEditedDuration] = useState('');
@@ -119,10 +129,18 @@ function TimeEntryRow({ entry, onUpdate, onDelete }: TimeEntryRowProps) {
       : null;
 
   const isActive = endDate == null;
-  const durationMinutes =
-    endDate != null
-      ? Math.max(0, (endDate.getTime() - startDate.getTime()) / (60 * 1000))
-      : Math.max(0, (Date.now() - startDate.getTime()) / (60 * 1000));
+  // const durationMinutes =
+  //   endDate != null
+  //     ? Math.max(0, (endDate.getTime() - startDate.getTime()) / (60 * 1000))
+  //     : Math.max(0, (nowMs - startDate.getTime()) / (60 * 1000));
+
+  const startMs = startDate.getTime();
+  const safeNowMs = nowMs;
+  const durationMinutes = !Number.isFinite(startMs)
+    ? 0
+    : endDate != null
+      ? Math.max(0, (endDate.getTime() - startMs) / 60000)
+      : Math.max(0, (safeNowMs - startMs) / 60000);
 
   function handleEditClick() {
     setEditedDescription(description);
@@ -234,9 +252,10 @@ function TimeEntryRow({ entry, onUpdate, onDelete }: TimeEntryRowProps) {
         </button>
         <button
           type="button"
+          disabled={isActive}
           onClick={handleDeleteClick}
-          className="rounded border border-red-300 bg-white px-2 py-1 text-red-700 hover:bg-red-50"
-          title="Delete entry"
+          className="rounded border border-red-300 bg-white px-2 py-1 text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+          title={isActive ? 'Cannot delete active entry' : 'Delete entry'}
         >
           Delete
         </button>

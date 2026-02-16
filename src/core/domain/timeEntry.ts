@@ -10,4 +10,3 @@ export interface TimeEntry {
   createdAt: Date;
   updatedAt: Date;
 }
-

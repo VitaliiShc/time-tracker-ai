@@ -49,4 +49,3 @@ export function TimeEntryForm({ onSubmit }: TimeEntryFormProps) {
     </form>
   );
 }
-

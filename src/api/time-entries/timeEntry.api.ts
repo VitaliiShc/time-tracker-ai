@@ -3,13 +3,16 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { ProjectRepository } from '../../core/repositories/project.repository';
 import { TimeEntryRepository } from '../../core/repositories/timeEntry.repository';
-import type { StartTimerInput, UpdateTimeEntryInput } from '../../core/services/timeEntry.service';
+import type {
+  StartTimerInput,
+  UpdateTimeEntryInput,
+} from '../../core/services/timeEntry.service';
 import { TimeEntryService } from '../../core/services/timeEntry.service';
 import { mapErrorToHttp } from '../utils/errorMapper';
 
 const timeEntryService = new TimeEntryService(
   new TimeEntryRepository(),
-  new ProjectRepository()
+  new ProjectRepository(),
 );
 
 /** Standard success response envelope */
@@ -36,12 +39,12 @@ function errorResponse(error: unknown): NextResponse<ApiErrorResponse> {
       error: body.error,
       ...(body.code && { code: body.code }),
     },
-    { status }
+    { status },
   );
 }
 
 export async function handleGetEntries(
-  _req: NextRequest
+  _req: NextRequest,
 ): Promise<NextResponse<ApiResponse<TimeEntry[]>>> {
   try {
     const entries = await timeEntryService.getEntries();
@@ -53,7 +56,7 @@ export async function handleGetEntries(
 
 export async function handleGetEntry(
   _req: NextRequest,
-  id: string
+  id: string,
 ): Promise<NextResponse<ApiResponse<TimeEntry>>> {
   try {
     const entry = await timeEntryService.getEntry(id);
@@ -64,7 +67,7 @@ export async function handleGetEntry(
 }
 
 export async function handleStartTimer(
-  req: NextRequest
+  req: NextRequest,
 ): Promise<NextResponse<ApiResponse<TimeEntry>>> {
   try {
     const body = await req.json();
@@ -81,7 +84,7 @@ export async function handleStartTimer(
 
 export async function handleStopTimer(
   _req: NextRequest,
-  id: string
+  id: string,
 ): Promise<NextResponse<ApiResponse<TimeEntry>>> {
   try {
     const entry = await timeEntryService.stopTimer(id);
@@ -103,7 +106,7 @@ function parseUpdateBody(body: unknown): UpdateTimeEntryInput {
 
 export async function handleUpdateEntry(
   req: NextRequest,
-  id: string
+  id: string,
 ): Promise<NextResponse<ApiResponse<TimeEntry>>> {
   try {
     const body = await req.json().catch(() => ({}));
@@ -117,7 +120,7 @@ export async function handleUpdateEntry(
 
 export async function handleDeleteEntry(
   _req: NextRequest,
-  id: string
+  id: string,
 ): Promise<NextResponse<ApiResponse<void>>> {
   try {
     await timeEntryService.deleteEntry(id);

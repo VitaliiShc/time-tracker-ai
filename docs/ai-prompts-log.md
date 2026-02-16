@@ -3530,4 +3530,151 @@ Future Risk Mitigation:
 - Avoid temporary placeholder logic in handlers.
 - Prefer API-layer normalization over widening service-layer types.
 
-This debug pass restored architectural correctness and ensured production-level stability of the Projects domain.
+## This debug pass restored architectural correctness and ensured production-level stability of the Projects domain.
+
+## [2026-02-16] — Timer State Stabilization & Synchronization Fix
+
+Tool: ChatGPT  
+Model: GPT-5  
+Scope: Multi-file debugging, domain normalization & state synchronization
+
+### Prompt
+
+Timer and TimeEntryList were not synchronized.
+
+Observed issues:
+
+- New time entry did not appear in the list after Start.
+- Stopped entry remained “active” in the list until page reload.
+- `Invalid Date` displayed in Timer.
+- Elapsed timer not ticking correctly.
+- Backend returned Prisma model fields (`description/startTime/endTime`).
+- Frontend domain expected (`notes/startedAt/endedAt`).
+- React purity warning due to `Date.now()` used during render.
+- Deleting active entry caused 404 on Stop.
+
+Fix all issues while:
+
+- Preserving architecture (UI → hooks → services → API → service → repository → Prisma)
+- Keeping envelope-based API contract intact
+- Avoiding business logic in UI
+- Not modifying core service/domain layer unnecessarily
+- Ensuring clean separation of concerns
+
+Ensure:
+
+- Timer and TimeEntryList stay synchronized without page reload
+- Domain model consistency between backend and frontend
+- No impure calls during render
+- Active entry cannot be deleted
+- No regression introduced in CRUD flow
+
+### Purpose
+
+Restore full consistency and synchronization of timer state across the application.
+
+This stabilization pass ensures:
+
+- API → Domain mapping consistency
+- Correct handling of Date fields on frontend
+- Immediate UI updates after start/stop actions
+- Elimination of stale state between hooks
+- Compliance with React purity rules
+- Prevention of invalid user flows (deleting active entry)
+
+Additionally, this step significantly reduces systemic UI-state risks before moving to Reports testing.
+
+### Changes
+
+        modified:   app/globals.css
+        modified:   dev.db
+        modified:   src/api/time-entries/timeEntry.api.ts
+        modified:   src/components/TimeEntryList.tsx
+        modified:   src/core/domain/timeEntry.ts
+        modified:   src/hooks/useActiveTimer.ts
+        modified:   src/hooks/useTimeEntries.ts
+        modified:   src/presentation/components/time-entries/TimeEntryForm.tsx
+        modified:   src/services/timeEntryService.ts
+        modified:   src/shared/utils/date.ts
+        new file:   src/shared/utils/events.ts
+
+Key modifications:
+
+1. Added API → Domain normalization layer in `timeEntryService`.
+   - Mapped `description` → `notes`
+   - Mapped `startTime` → `startedAt` (Date)
+   - Mapped `endTime` → `endedAt` (Date | undefined)
+   - Normalized `createdAt/updatedAt` to Date objects
+
+2. Implemented client-side event synchronization:
+   - Introduced lightweight event bus (`time-entries:changed`)
+   - Emitted on start/stop
+   - `useTimeEntries` listens and reloads automatically
+
+3. Fixed React purity violation:
+   - Removed `Date.now()` from render
+   - Introduced `nowMs` state with interval update
+
+4. Disabled deletion of active time entry (UX guard).
+
+5. Ensured timer refresh consistency after start/stop.
+
+### Result Summary
+
+Resolved systemic synchronization issues affecting Timer and TimeEntryList.
+
+1. Fixed domain mismatch between backend and frontend.  
+   Backend returned Prisma model directly, causing:
+   - Invalid Date
+   - Incorrect active state detection
+   - Stale timer behavior
+
+   Introduced explicit API normalization layer to enforce domain contract.
+
+2. Implemented event-driven state synchronization.  
+   Timer and TimeEntryList now update instantly without page reload.
+
+3. Removed impure `Date.now()` usage inside render.  
+   React warnings eliminated.
+
+4. Prevented deletion of active entry.  
+   Avoided inconsistent state and 404 errors on stop.
+
+System state after fix:
+
+- Timer stable
+- TimeEntryList synchronized
+- No reload required after start/stop
+- Domain model integrity preserved
+- Architecture boundaries maintained
+- Envelope contract untouched
+
+### Notes
+
+Root Causes Identified:
+
+1. Direct exposure of Prisma model to frontend.  
+   This broke domain consistency and Date handling.
+
+2. Separate hooks managing independent state without invalidation mechanism.
+
+3. Implicit reliance on page reload to synchronize state.
+
+4. React purity violation due to `Date.now()` in render.
+
+Architectural Integrity Maintained:
+
+- No business logic added to UI.
+- No changes to core service rules.
+- No repository modifications.
+- API envelope preserved.
+- Synchronization implemented at hooks layer only.
+
+Future Risk Mitigation:
+
+- Avoid returning raw ORM models from API layer.
+- Always normalize API response to domain model in services layer.
+- Prefer event-based invalidation over implicit reload assumptions.
+- Audit other domains for potential API → Domain mismatch.
+
+This stabilization pass ensures production-level consistency of the TimeEntry domain and prepares the system for reliable Reports testing.
