@@ -3,10 +3,10 @@ import type { TimeEntry } from '../domain/timeEntry';
 export type Period = 'day' | 'week' | 'month';
 
 /**
- * Normalizes startedAt to a Date in local time; returns null if missing or invalid.
+ * Normalizes startTime to a Date in local time; returns null if missing or invalid.
  */
-function parseStartedAt(entry: TimeEntry): Date | null {
-  const value = entry.startedAt;
+function parseStartTime(entry: TimeEntry): Date | null {
+  const value = entry.startTime;
   if (value == null) return null;
   const date = value instanceof Date ? value : new Date(value as string);
   if (Number.isNaN(date.getTime())) return null;
@@ -40,38 +40,40 @@ function sameWeek(left: Date, right: Date): boolean {
 
 function sameMonth(left: Date, right: Date): boolean {
   return (
-    left.getFullYear() === right.getFullYear() && left.getMonth() === right.getMonth()
+    left.getFullYear() === right.getFullYear() &&
+    left.getMonth() === right.getMonth()
   );
 }
 
 /**
- * Filters time entries to those whose startedAt falls within the given period (day, week, or month)
+ * Filters time entries to those whose startTime falls within the given period (day, week, or month)
  * relative to a reference date. Uses local time; does not mutate the input array.
  *
  * @param entries - Time entries to filter
  * @param period - "day" | "week" | "month"
  * @param referenceDate - Reference date (defaults to now)
- * @returns New array of entries in the period; entries with invalid startedAt are excluded
+ * @returns New array of entries in the period; entries with invalid startTime are excluded
  */
 export function filterTimeEntriesByPeriod(
   entries: TimeEntry[],
   period: Period,
-  referenceDate: Date = new Date()
+  referenceDate: Date = new Date(),
 ): TimeEntry[] {
   if (entries.length === 0) return [];
 
-  const ref = referenceDate instanceof Date ? referenceDate : new Date(referenceDate);
+  const ref =
+    referenceDate instanceof Date ? referenceDate : new Date(referenceDate);
 
   const predicate = (entry: TimeEntry): boolean => {
-    const startedAt = parseStartedAt(entry);
-    if (startedAt === null) return false;
+    const startTime = parseStartTime(entry);
+    if (startTime === null) return false;
     switch (period) {
       case 'day':
-        return sameDay(startedAt, ref);
+        return sameDay(startTime, ref);
       case 'week':
-        return sameWeek(startedAt, ref);
+        return sameWeek(startTime, ref);
       case 'month':
-        return sameMonth(startedAt, ref);
+        return sameMonth(startTime, ref);
       default:
         return false;
     }

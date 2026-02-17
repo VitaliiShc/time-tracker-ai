@@ -10,11 +10,11 @@ import {
 import { emitTimeEntriesChanged } from '../shared/utils/events';
 
 /**
- * Finds the single active time entry (no endedAt) from a list.
+ * Finds the single active time entry (no endTime) from a list.
  * Relies on backend rule: at most one active entry.
  */
 function findActiveEntry(entries: TimeEntry[]): TimeEntry | null {
-  const active = entries.find((entry) => entry.endedAt == null);
+  const active = entries.find((entry) => entry.endTime == null);
   return active ?? null;
 }
 

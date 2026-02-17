@@ -204,38 +204,24 @@ This repository will be used by service layer for business logic.
 ### Result Summary
 
 - Створено клас ProjectRepository у src/core/repositories/project.repository.ts.
-
 - Використано PrismaClient singleton з src/core/db/prismaClient.ts.
-
 - Типи TypeScript: використані Prisma-generated Project та власні інтерфейси для input.
-
 - Реалізовані методи:
   - getAll() — повертає всі проекти, відсортовані за датою створення (новіші першими)
-
   - getById(id: string) — отримання проекту за ID або null
-
   - create(data) — створює новий проект з name і color
-
   - update(id, data) — оновлює лише надані поля (partial update)
-
   - delete(id) — видаляє проект за ID
-
 - Реалізовано обробку помилок Prisma для подальшого використання на сервісному рівні
-
 - Business logic відсутній — чистий data access layer
-
 - Готово для використання у сервісах та подальшої інтеграції з UI
 
 ### Notes
 
 - Використання partial update через conditional spreading — сучасний best practice для репозиторіїв
-
 - Типізація забезпечує повну безпеку при використанні у сервісах
-
 - Підготовка до наступного кроку: створення TimeEntry repository
-
 - Рекомендується після генерації додати unit-тести для CRUD методів (опційно, але добре для демонстрації професійного підходу)
-
 - Всі зміни можна легко логувати через git diff для наступних кроків
 
 ---
@@ -278,38 +264,24 @@ The repository must support partial updates and maintain proper TypeScript typin
 ### Result Summary
 
 - Створено клас TimeEntryRepository у src/core/repositories/timeEntry.repository.ts.
-
 - Використано PrismaClient singleton з src/core/db/prismaClient.ts.
-
 - Реалізовані методи:
   - getAll() — повертає всі записи часу, відсортовані за startTime у спадаючому порядку
-
   - getById(id: string) — отримання запису за ID або null
-
   - create(data) — створює новий запис часу з обов’язковими та опційними полями
-
   - update(id, data) — оновлює лише надані поля (partial update)
-
   - delete(id) — видаляє запис за ID
-
   - listByProject(projectId) — повертає всі записи часу конкретного проекту
-
 - Типи TypeScript: використані Prisma-generated TimeEntry та власні інтерфейси для input (CreateTimeEntryData, UpdateTimeEntryData)
-
 - Відповідність шаблону ProjectRepository: чистий код, JSDoc коментарі, conditional update через spread оператор
-
 - Репозиторій готовий до використання у сервісах і забезпечує повну типізацію та зв’язки з Project
 
 ### Notes
 
 - Використання listByProject дозволяє легко групувати записи по проектам для UI або звітів
-
 - Conditional spread у update() — сучасний best practice для partial update
-
 - Репозиторій повністю повторює патерн ProjectRepository → консистентність коду
-
 - Наступний крок: створення service layer для бізнес-логіки (ProjectService та TimeEntryService)
-
 - Рекомендація: додати unit-тести на CRUD методи для перевірки логіки та зв’язків
 
 ---
@@ -366,55 +338,34 @@ for controllers or API routes.
 ### Result Summary
 
 - Повністю реалізовано ProjectService у src/core/services/project.service.ts.
-
 - Сервіс використовує dependency injection через ProjectRepository (без прямого використання Prisma).
-
 - Реалізовані методи:
   - getProjects() — отримання всіх проектів
-
   - getProject(id) — отримання проекту з перевіркою існування
-
   - createProject(data) — створення з валідацією та перевіркою дублікатів
-
   - updateProject(id, data) — оновлення з перевіркою існування та валідацією
-
   - deleteProject(id) — видалення з перевіркою існування
-
 - Додані бізнес-правила:
   - Назва проекту обов’язкова
-
   - Назва тримається через trim()
-
   - Заборонено створення проекту з існуючим іменем
-
 - Додано getByName() у ProjectRepository для перевірки дублікатів.
-
 - Оновлено domain-модель Project — тепер відповідає Prisma schema (id, name, color, createdAt, updatedAt).
-
 - API оновлено для використання ProjectRepository + ProjectService.
-
 - Введено кастомні помилки:
   - ProjectNotFoundError
-
   - ProjectValidationError
-
 - Повна типізація через CreateProjectInput, UpdateProjectInput та domain Project.
 
 ### Notes
 
 - Архітектура тепер чітко розділена:
   - Repository → persistence
-
   - Service → бізнес-логіка
-
   - API → транспортний шар
-
 - Duplicate-check через getByName() — правильний підхід без завантаження всіх проектів.
-
 - Domain-модель синхронізована з Prisma — уникнуто drift між domain і persistence.
-
 - Dependency Injection дозволяє легко писати unit-тести для сервісу.
-
 - Сервіс готовий до розширення (наприклад: soft-delete, project statistics, etc.).
 
 ---
@@ -493,68 +444,41 @@ while keeping persistence concerns inside repositories.
 ### Result Summary
 
 - Додано getActiveEntry() у TimeEntryRepository для перевірки наявності активного таймера (endTime = null).
-
 - Реалізовано TimeEntryService у src/core/services/timeEntry.service.ts.
-
 - Використано dependency injection:
   - TimeEntryRepository
-
   - ProjectRepository
-
 - Prisma не використовується у сервісі — чисте дотримання Clean Architecture.
-
 - Реалізовані методи:
   - getEntries() — отримання всіх записів
-
   - getEntry(id) — отримання запису з перевіркою існування
-
   - startTimer() — старт нового таймера з валідацією
-
   - stopTimer(id) — зупинка таймера з автоматичним розрахунком duration
-
   - updateEntry(id, data) — часткове оновлення з перерахунком duration
-
   - deleteEntry(id) — видалення з перевіркою існування
-
 - Бізнес-правила:
   - Заборонено запускати новий таймер, якщо вже є активний
-
   - Обов’язкова перевірка існування проекту
-
   - description обов’язковий та trim()
-
   - duration рахується автоматично (seconds)
-
 - Додано кастомні помилки:
   - TimeEntryNotFoundError
-
   - ActiveTimerExistsError
-
   - TimeEntryValidationError
-
 - Додано helper durationInSeconds() для централізованого розрахунку часу
-
 - Повна типізація через Prisma-generated типи
-
 - Повна JSDoc документація
 
 ### Notes
 
 - Логіка активного таймера реалізована правильно через repository → сервіс не знає про Prisma.
-
 - Інваріант "only one active timer" тепер гарантований на рівні домену.
-
 - Перерахунок duration при зміні startTime або endTime — критично правильне рішення.
-
 - Помилки розділені по типах → це дозволить правильно мапити їх у HTTP status коди.
-
 - Архітектура тепер має повноцінний Domain Core:
   - Repositories
-
   - Services
-
   - Error layer
-
   - Business invariants
 
 ---
@@ -651,6 +575,8 @@ Requirements:
    - Unknown error → 500
 
 4. The function must return:
+
+```
    {
    status: number;
    body: {
@@ -658,6 +584,7 @@ Requirements:
    code?: string;
    };
    }
+```
 
 5. Use instanceof checks.
 6. Do NOT use any framework-specific logic (no NextResponse inside).
@@ -698,6 +625,8 @@ and the transport layer.
   - DomainError → 400
   - Unknown error → 500 (generic message)
 - Повертається стандартизована структура:
+
+```
   {
   status: number,
   body: {
@@ -705,6 +634,8 @@ and the transport layer.
   code?: string
   }
   }
+```
+
 - Не використовується framework-specific логіка (NextResponse відсутній).
 - Експортовано типи MappedHttpError та HttpErrorResponseBody.
 - Готово для використання в API routes.
@@ -738,18 +669,22 @@ Requirements:
 3. Use mapErrorToHttp(error) inside catch.
 4. Return standardized JSON structure:
 
+```
    Success:
    {
    success: true,
    data: ...
    }
+```
 
+```
    Error:
    {
    success: false,
    error: string,
    code?: string
    }
+```
 
 5. Use NextResponse.json() for responses.
 6. HTTP status codes must come from errorMapper.
@@ -781,18 +716,22 @@ Repository → Service → DomainError → ErrorMapper → API.
 - HTTP статуси беруться виключно з errorMapper.
 - Реалізовано стандартизований response envelope:
 
+```
   Success:
   {
   success: true,
   data: T
   }
+```
 
+```
   Error:
   {
   success: false,
   error: string,
   code?: string
   }
+```
 
 - Використовується NextResponse.json() для відповіді.
 - Типізація уніфікована через ApiSuccessResponse<T>, ApiErrorResponse, ApiResponse<T>.
@@ -829,18 +768,22 @@ Requirements:
 3. Use mapErrorToHttp(error) inside catch.
 4. Return standardized JSON structure:
 
+```
    Success:
    {
    success: true,
    data: ...
    }
+```
 
+```
    Error:
    {
    success: false,
    error: string,
    code?: string
    }
+```
 
 5. Use NextResponse.json() for responses.
 6. HTTP status codes must come from errorMapper.
@@ -887,24 +830,17 @@ Goals:
 1. DomainError (src/core/errors/domain.error.ts)
 
 - Базовий клас для всіх доменних помилок.
-
 - Має message та машинозчитуваний code.
-
 - Підтримка instanceof після транспіляції та toJSON() для API/логування.
-
 - Можливість розширення під конкретні помилки (ProjectNotFoundError тощо).
 
 2. HTTP Error Mapper (src/api/utils/errorMapper.ts)
 
 - Функція mapErrorToHttp(error) централізовано мапить доменні помилки на HTTP статуси:
   - 404 → Not Found (ProjectNotFoundError, TimeEntryNotFoundError)
-
   - 409 → Conflict (ActiveTimerExistsError)
-
   - 400 → Bad Request (ProjectValidationError, TimeEntryValidationError, DomainError)
-
   - 500 → Unknown / generic errors
-
 - Повертає { status, body: { error, code? } }.
 
 Використовується у всіх API-хендлерах для безпечного оброблення помилок.
@@ -912,9 +848,7 @@ Goals:
 3. Project API Refactor (src/api/projects/project.api.ts)
 
 - Усі виклики сервісу обгорнуті в try/catch.
-
 - Використовується mapErrorToHttp(error) у catch.
-
 - Відповідь у стандартному envelope:
 
 ```ts
@@ -923,41 +857,27 @@ Error: { success: false, error: string, code?: string }
 ```
 
 - Типізація через ApiResponse<T>.
-
 - Domain type Project використовується для відповіді.
-
 - Production-safe обробка unknown errors (500).
-
 - Thin transport layer без бізнес-логіки; правила та валідація залишаються у сервісі.
 
 5. TimeEntry API + Centralized Error Handling (src/api/time-entries/timeEntry.api.ts + маршрути)
 
 - Реалізовано всі хендлери: getEntries, getEntry, startTimer, stopTimer, updateEntry, deleteEntry.
-
 - Всі хендлери використовують TimeEntryService та ProjectRepository.
-
 - Центральна обробка помилок через mapErrorToHttp.
-
 - Стандартизований JSON envelope.
-
 - Типізація через TimeEntry + ApiResponse<T>.
-
 - Роутинг Next.js App Router для list, single, update, delete, stop.
-
 - Тонкий шар: парсинг запитів, приведення типів, жодної бізнес-логіки.
-
 - API готовий до production, модульний та unit-тестований, без витоку внутрішніх помилок, узгоджено з clean architecture.
 
 ### Notes
 
 - Валідація та правила залишаються у сервісах (ProjectService, TimeEntryService).
-
 - Централізоване оброблення помилок спрощує масштабування та безпеку.
-
 - Стандартизований response envelope забезпечує легку інтеграцію з фронтендом.
-
 - Архітектура відповідає clean architecture принципам.
-
 - Production-ready: Project API та TimeEntry API готові для використання, тестування та масштабування.
 
 ---
@@ -1134,11 +1054,8 @@ Maintains consistent architecture and error handling patterns with Project and T
 1. Autocomplete Implementation:
 
 - Repository: searchByName(query: string) — пошук по підрядку у name, сортування по імені, маппінг на domain
-
 - Service: getTasksAutocomplete(query: string) — trims query; пустий рядок → повертає всі задачі (через getAll()); інакше делегує taskRepo.searchByName(query)
-
 - API: handleGetTasksAutocomplete(req) — читає query з req.nextUrl.searchParams.get('query'), try/catch + mapErrorToHttp, повертає { success: true, data } / { success: false, error, code? }
-
 - Route: app/api/tasks/autocomplete/route.ts — GET /api/tasks/autocomplete?query=…
 
 2. API Envelope:
@@ -1165,28 +1082,19 @@ Maintains consistent architecture and error handling patterns with Project and T
 3. Autocomplete behavior:
 
 - Повертає всі TaskName, де name містить підрядок query (trimmed)
-
 - Якщо query відсутній або пустий — повертає всі TaskName
 
 ### Notes
 
 - Реалізація production-ready:
   - Централізована обробка помилок через mapErrorToHttp
-
   - Консистентний формат відповіді для фронтенду
-
   - Сильна TypeScript типізація
-
 - Збережено узгодженість з Project та TimeEntry API
-
 - Autocomplete endpoint готовий для typeahead та швидкого пошуку
-
 - Тонкий API-шар: лише парсинг, валідація, делегування сервісу
-
 - Бізнес-логіка та валідація (trim, унікальність імені) залишаються в сервісі
-
 - Всі хендлери модульні та unit-тестовані окремо
-
 - Підтримується масштабування: додавання нових полів, маршрутів чи методів сервісу без порушення існуючого API
 
 ---
@@ -1216,17 +1124,19 @@ Implement:
 
 - A typed generic request function:
 
+```
   async function apiRequest<T>(
   input: RequestInfo,
   init?: RequestInit
   ): Promise<T>
+```
 
 - It should:
   - Use fetch
   - Parse JSON
   - Expect backend envelope:
-    { success: true, data }
-    { success: false, error, code? }
+    `{ success: true, data }`
+    `{ success: false, error, code? }`
   - If success: false → throw an Error with message and attach `code` if present
   - If response not ok → throw generic error
   - Set headers:
@@ -1326,9 +1236,7 @@ Created:
   - stopTimer
   - updateTimeEntry
   - deleteTimeEntry
-
 - projectService.ts — CRUD client for projects
-
 - taskService.ts — CRUD + autocomplete client for tasks
 
 All services:
@@ -1347,19 +1255,15 @@ This establishes a clean transport boundary for the frontend.
 
 1. Strong architectural move:
    The UI will not directly use `fetch`, which prevents transport leakage into components.
-
 2. Error handling is now centralized and consistent with backend error mapper.
-
 3. The layer is future-proof:
    - If authentication headers are added later → only apiClient changes.
    - If base URL changes → single adjustment.
-
 4. Minor observation:
    You mentioned mapping `notes → description` and `startedAt → startTime`.
    That suggests a naming mismatch between frontend model and backend domain.
    If this mapping is intentional — OK.
    If not — we may want to align naming to avoid unnecessary transformations.
-
 5. PATCH / DELETE for projects are implemented in client but not yet in API routes — this is fine and forward-compatible.
 
 ---
@@ -1405,6 +1309,7 @@ Use useEffect with a stable loadProjects() function.
 
 The hook must return:
 
+```
 {
 projects,
 isLoading,
@@ -1414,6 +1319,7 @@ createProject,
 updateProject,
 deleteProject,
 }
+```
 
 5. Behavior
 
@@ -1447,17 +1353,13 @@ The hook:
   - projects: Project[]
   - isLoading: boolean
   - error: string | null
-
 - Automatically fetches projects on mount via memoized `loadProjects`.
-
 - Exposes:
   - reload()
   - createProject()
   - updateProject()
   - deleteProject()
-
 - Uses only `projectService` (no direct fetch calls).
-
 - Properly handles:
   - loading state
   - error state
@@ -1473,20 +1375,16 @@ UI → hook → service → API → backend
 1. Stable load function
    useCallback + useEffect dependency is correct.
    No accidental infinite loops.
-
 2. Clean error propagation
    Errors from service bubble up properly.
    Not swallowed silently.
-
 3. Predictable mutation pattern
    All mutations follow:
    call service → reload list
    This keeps state consistent and avoids partial stale updates.
-
 4. isLoading handling
    Correctly managed in loadProjects via finally.
    Mutation methods do not toggle isLoading — this is acceptable and avoids UI flicker.
-
 5. Safe and minimal complexity
    No premature optimization.
    No optimistic updates.
@@ -1538,6 +1436,7 @@ Trigger it via useEffect on mount.
 
 Return:
 
+```
 {
 timeEntries,
 isLoading,
@@ -1546,6 +1445,7 @@ reload,
 updateTimeEntry,
 deleteTimeEntry,
 }
+```
 
 5. Behavior
 
@@ -1616,18 +1516,12 @@ The hook provides structured state orchestration for TimeEntry entities and inte
 It:
 
 - Manages timeEntries, isLoading, and error state
-
 - Fetches entries automatically on mount using a stable loadTimeEntries function
-
 - Exposes reload, updateTimeEntry, and deleteTimeEntry
-
 - Ensures state consistency by refetching after mutations
-
 - Handles errors predictably without swallowing exceptions
-
 - Maintains strict separation between UI and transport logic
-
-Architecture boundary preserved:
+  Architecture boundary preserved:
 
 UI → hook → service → API → backend
 
@@ -1638,26 +1532,19 @@ This establishes a stable state foundation required for timer handling, grouping
 1. Consistent mutation pattern
    All write operations follow the deterministic flow:
    service call → controlled reload, ensuring no partial or stale state.
-
 2. Stable side-effect management
    loadTimeEntries is memoized and used safely inside useEffect, preventing accidental infinite re-renders.
-
 3. Transport isolation preserved
    The hook does not leak fetch logic or API concerns into UI components.
-
 4. Predictable error handling
    Errors are captured and normalized into the error state, keeping rendering logic simple and explicit.
-
 5. Foundation for next layers
    The hook is intentionally minimal and avoids premature optimization (no optimistic updates, no derived logic).
    This keeps the state layer stable before introducing:
 
 - active timer logic
-
 - grouping by project
-
 - period-based filtering
-
 - report generation
 
 ---
@@ -1778,38 +1665,22 @@ Implemented groupTimeEntriesByProject utility in src/core/utils/groupTimeEntries
 The utility:
 
 - Groups TimeEntry entities by projectId
-
 - Resolves project metadata (name, color) from the provided projects list
-
 - Falls back to "Unknown Project" when a project is not found
-
 - Computes totalMinutes per group by deriving duration from startedAt and endedAt
-
 - Preserves original entry order within each group
-
 - Sorts groups by totalMinutes in descending order
-
 - Skips entries with missing projectId
-
-The function is fully pure:
-
+  The function is fully pure:
 - No React dependencies
-
 - No side effects
-
 - No input mutation
-
 - No external libraries
-
-This utility is reusable across:
-
+  This utility is reusable across:
 - Today view grouping
-
 - Report aggregation
-
 - CSV export generation
-
-Architecture boundary preserved:
+  Architecture boundary preserved:
 
 UI → hook → domain utils → service → API → backend
 
@@ -1831,27 +1702,21 @@ However:
 Long-term cleaner solution:
 
 - Either persist durationMinutes in DB
-
 - Or expose it in API DTO
-
-For this test task — current solution is acceptable and safe.
+  For this test task — current solution is acceptable and safe.
 
 3. Deterministic behavior
 
 - Stable sorting
-
 - Explicit fallback for missing projects
-
 - Explicit handling of missing dates
-
-No hidden assumptions.
+  No hidden assumptions.
 
 4. Future-proofing
 
 If later:
 
 - Active timer entries have no endedAt
-
 - Or reports span large datasets
 
 This utility still behaves predictably (entries without end date contribute 0).
@@ -1863,9 +1728,7 @@ Extremely low.
 This was the correct next step before introducing:
 
 - Active timer orchestration
-
 - Period filtering
-
 - Report generation
 
 ---
@@ -3979,5 +3842,121 @@ Next Phase:
 → Validate API contract.
 → Validate timer & reports in production.
 → Prepare README & final submission.
+
+---
+
+## [2026-02-16] — Fly.io Production Deploy Stabilization (SQLite Volume + Prisma 7)
+
+Tool: ChatGPT  
+Model: GPT-5  
+Scope: Dockerfile, Fly.io config, Prisma runtime configuration
+
+### Prompt
+
+Investigate production 500 errors after first Fly.io deployment (Next.js 16 + Prisma 7 + SQLite).  
+Database file `/data/dev.db` existed but remained 0 bytes.  
+Release command reported successful migration, but runtime API endpoints returned 500.  
+Goal: stabilize SQLite persistence on Fly volume and ensure migrations execute against the mounted volume.
+
+### Purpose
+
+Stabilize production deployment for SQLite on Fly.io persistent volume while preserving:
+
+- Clean architecture
+- Envelope API contract
+- Prisma 7 configuration model
+- Single-machine Fly setup
+- Volume-based persistence at `/data`
+- Zero business logic leakage
+
+### Changes
+
+#### 1️⃣ Prisma 7 Configuration
+
+- Removed `url` from `schema.prisma` (Prisma 7 no longer supports it).
+- Moved datasource URL to `prisma.config.ts`.
+- Ensured `DATABASE_URL` comes from Fly secrets.
+- Added fallback `file:./dev.db` for local/dev & Docker build.
+
+#### 2️⃣ Dockerfile Fix
+
+- Copied `prisma.config.ts` into runner stage.
+- Added fallback `ENV DATABASE_URL="file:./dev.db"` in builder stage for `prisma generate`.
+- Replaced default CMD with:
+
+```dockerfile
+CMD ["sh", "-c", "npx prisma migrate deploy && npm start"]
+```
+
+This guarantees:
+
+- Migrations execute inside the main app machine
+- /data volume is mounted when migrations run
+- SQLite writes to file:/data/dev.db
+
+#### 3️⃣ Removed Fly release_command
+
+Removed:
+
+```
+[deploy]
+release_command = "npx prisma migrate deploy"
+```
+
+Reason:
+Release command runs in ephemeral VM without mounted volume, causing migrations to apply outside /data.
+
+#### 4️⃣ Temporary Stabilization Mode
+
+Temporarily set:
+
+```
+auto_stop_machines = "off"
+min_machines_running = 1
+```
+
+Used for debugging and SSH validation.
+
+After validation, restored intended config:
+
+```
+auto_stop_machines = "stop"
+min_machines_running = 0
+```
+
+#### 5️⃣ Validation Steps
+
+- Verified `DATABASE_URL=file:/data/dev.db` inside container.
+
+- Confirmed `/data/dev.db` size changed from 0 → ~36 KB.
+- Confirmed `migrate deploy` reports “No pending migrations”.
+- Verified:
+  - Projects CRUD
+  - Timer start/stop
+  - TimeEntries persistence
+  - Reports
+  - CSV export
+- Confirmed volume persists after machine restart.
+
+### Result Summary
+
+- SQLite now persists correctly on Fly volume
+- Prisma 7 configuration compliant
+- Migrations execute safely on app startup
+- 500 errors resolved
+- Envelope API contract preserved
+- Single-machine architecture maintained
+- Autosleep configuration restored
+
+Production deployment is now stable.
+
+Notes
+
+- Fly release_command is unsuitable for SQLite-on-volume setups.
+- Migrations must run on the machine where the volume is mounted.
+- SQLite + Fly volume requires explicit startup migration strategy.
+- No business logic changes were made.
+- Clean architecture boundaries preserved.
+- No envelope violations introduced.
 
 ---

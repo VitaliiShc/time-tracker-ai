@@ -27,8 +27,8 @@ export function Timer() {
   const { suggestions, isLoading: suggestionsLoading } =
     useTasksAutocomplete(description);
 
-  const startDate = activeEntry?.startedAt
-    ? new Date(activeEntry.startedAt).getTime()
+  const startDate = activeEntry?.startTime
+    ? new Date(activeEntry.startTime).getTime()
     : 0;
 
   useEffect(() => {
@@ -56,12 +56,10 @@ export function Timer() {
       : '';
 
   const taskDisplay =
-    activeEntry?.notes ??
-    (activeEntry as { description?: string } | null)?.description ??
-    '—';
+    (activeEntry as { description?: string } | null)?.description ?? '—';
   const startTimeDisplay =
     activeEntry != null
-      ? new Date(activeEntry.startedAt).toLocaleTimeString(undefined, {
+      ? new Date(activeEntry.startTime).toLocaleTimeString(undefined, {
           hour: '2-digit',
           minute: '2-digit',
         })

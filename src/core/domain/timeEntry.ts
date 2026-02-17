@@ -4,9 +4,13 @@ export interface TimeEntry {
   id: string;
   projectId: string;
   taskNameId?: string;
-  startedAt: Date;
-  endedAt?: Date;
-  notes?: string;
+
+  description: string; // task name
+  startTime: Date;
+  endTime?: Date;
+
+  duration?: number; // seconds (derived on backend)
+
   createdAt: Date;
   updatedAt: Date;
 }

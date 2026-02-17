@@ -3,28 +3,19 @@ import type { TimeEntry } from '../core/domain/timeEntry';
 
 const BASE = '/api/time-entries';
 
-/**
- * Backend returns Prisma TimeEntry-like payload (description/startTime/endTime/etc).
- * Frontend domain expects Date fields (startedAt/endedAt/etc) and notes.
- */
 type ApiTimeEntry = {
   id: string;
   projectId: string;
   taskNameId?: string | null;
 
-  description?: string | null;
+  description: string;
+  startTime: string;
+  endTime: string | null;
 
-  startTime?: string | null;
-  endTime?: string | null;
-
-  startedAt?: string | null;
-  endedAt?: string | null;
+  duration: number; // seconds
 
   createdAt: string;
   updatedAt: string;
-
-  // may exist on backend, but domain doesn't require it here
-  duration?: number | null;
 };
 
 function toDate(value: string | null | undefined): Date {
@@ -34,21 +25,19 @@ function toDate(value: string | null | undefined): Date {
 }
 
 function mapApiTimeEntryToDomain(apiEntry: ApiTimeEntry): TimeEntry {
-  const startedAtRaw = apiEntry.startedAt ?? apiEntry.startTime;
-  const endedAtRaw = apiEntry.endedAt ?? apiEntry.endTime;
-
   return {
     id: apiEntry.id,
     projectId: apiEntry.projectId,
     taskNameId: apiEntry.taskNameId ?? undefined,
 
-    notes: apiEntry.description ?? undefined,
+    description: apiEntry.description,
+    startTime: new Date(apiEntry.startTime),
+    endTime: apiEntry.endTime ? new Date(apiEntry.endTime) : undefined,
 
-    startedAt: toDate(startedAtRaw),
-    endedAt: endedAtRaw ? toDate(endedAtRaw) : undefined,
+    duration: apiEntry.duration,
 
-    createdAt: toDate(apiEntry.createdAt),
-    updatedAt: toDate(apiEntry.updatedAt),
+    createdAt: new Date(apiEntry.createdAt),
+    updatedAt: new Date(apiEntry.updatedAt),
   };
 }
 
@@ -72,11 +61,6 @@ export async function getTimeEntry(id: string): Promise<TimeEntry> {
   return mapApiTimeEntryToDomain(apiEntry);
 }
 
-/**
- * Starts a new timer with the given notes and project.
- * We keep UI variable name "description" if you want,
- * but domain-wise this is notes.
- */
 export async function startTimer(input: {
   description: string;
   projectId: string;
@@ -103,21 +87,17 @@ export async function stopTimer(id: string): Promise<TimeEntry> {
   return mapApiTimeEntryToDomain(apiEntry);
 }
 
-/**
- * Updates an existing time entry.
- * Maps domain fields (notes, startedAt, endedAt) to API fields (description, startTime, endTime).
- */
 export async function updateTimeEntry(
   id: string,
   data: Partial<TimeEntry>,
 ): Promise<TimeEntry> {
   const body: Record<string, unknown> = {};
 
-  if (data.notes !== undefined) body.description = data.notes;
-  if (data.startedAt !== undefined)
-    body.startTime = data.startedAt.toISOString();
-  if (data.endedAt !== undefined)
-    body.endTime = data.endedAt ? data.endedAt.toISOString() : null;
+  if (data.description !== undefined) body.description = data.description;
+  if (data.startTime !== undefined)
+    body.startTime = data.startTime.toISOString();
+  if (data.endTime !== undefined)
+    body.endTime = data.endTime ? data.endTime.toISOString() : null;
 
   const apiEntry = await apiRequest<ApiTimeEntry>(`${BASE}/${id}`, {
     method: 'PATCH',

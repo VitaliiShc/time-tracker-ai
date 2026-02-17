@@ -23,5 +23,4 @@ COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/prisma ./prisma
 EXPOSE 3000
-#CMD ["npm", "start"]
 CMD ["sh", "-c", "npx prisma migrate deploy && npm start"]

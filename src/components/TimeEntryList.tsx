@@ -113,19 +113,19 @@ function TimeEntryRow({ entry, nowMs, onUpdate, onDelete }: TimeEntryRowProps) {
   const [durationError, setDurationError] = useState<string | null>(null);
 
   const description =
-    entry.notes ??
+    entry.description ??
     (entry as TimeEntry & { description?: string }).description ??
     '—';
 
   const startDate =
-    entry.startedAt instanceof Date
-      ? entry.startedAt
-      : new Date(entry.startedAt as string);
+    entry.startTime instanceof Date
+      ? entry.startTime
+      : new Date(entry.startTime as string);
   const endDate =
-    entry.endedAt != null
-      ? entry.endedAt instanceof Date
-        ? entry.endedAt
-        : new Date(entry.endedAt as string)
+    entry.endTime != null
+      ? entry.endTime instanceof Date
+        ? entry.endTime
+        : new Date(entry.endTime as string)
       : null;
 
   const isActive = endDate == null;
@@ -163,12 +163,12 @@ function TimeEntryRow({ entry, nowMs, onUpdate, onDelete }: TimeEntryRowProps) {
       setDurationError('Invalid format. Use HH:MM');
       return;
     }
-    const newEndedAt = new Date(
+    const newEndTime = new Date(
       startDate.getTime() + parsedMinutes * 60 * 1000,
     );
-    const updates: Partial<TimeEntry> = { endedAt: newEndedAt };
+    const updates: Partial<TimeEntry> = { endTime: newEndTime };
     if (editedDescription.trim() !== description) {
-      updates.notes = editedDescription.trim() || undefined;
+      updates.description = editedDescription.trim() || undefined;
     }
     await onUpdate(entry.id, updates);
     setIsEditing(false);

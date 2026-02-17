@@ -11,15 +11,18 @@ export type GroupedTimeEntries = {
 
 const MS_PER_MINUTE = 60 * 1000;
 
-/**
- * Returns duration in minutes from startedAt to endedAt, or 0 if not both present.
- */
 function getEntryDurationMinutes(entry: TimeEntry): number {
-  if (entry.endedAt == null || entry.startedAt == null) {
+  if (entry.endTime == null || entry.startTime == null) {
     return 0;
   }
-  const start = entry.startedAt instanceof Date ? entry.startedAt.getTime() : new Date(entry.startedAt).getTime();
-  const end = entry.endedAt instanceof Date ? entry.endedAt.getTime() : new Date(entry.endedAt).getTime();
+  const start =
+    entry.startTime instanceof Date
+      ? entry.startTime.getTime()
+      : new Date(entry.startTime).getTime();
+  const end =
+    entry.endTime instanceof Date
+      ? entry.endTime.getTime()
+      : new Date(entry.endTime).getTime();
   return Math.max(0, (end - start) / MS_PER_MINUTE);
 }
 
@@ -29,7 +32,7 @@ function getEntryDurationMinutes(entry: TimeEntry): number {
  */
 export function groupTimeEntriesByProject(
   entries: TimeEntry[],
-  projects: Project[]
+  projects: Project[],
 ): GroupedTimeEntries[] {
   if (entries.length === 0) {
     return [];
@@ -37,7 +40,10 @@ export function groupTimeEntriesByProject(
 
   const projectById = new Map(projects.map((project) => [project.id, project]));
 
-  const groupMap = new Map<string, { entries: TimeEntry[]; totalMinutes: number }>();
+  const groupMap = new Map<
+    string,
+    { entries: TimeEntry[]; totalMinutes: number }
+  >();
 
   for (const entry of entries) {
     if (entry.projectId == null || entry.projectId === '') {

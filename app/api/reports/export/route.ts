@@ -25,9 +25,9 @@ function prismaToDomainEntry(entry: PrismaTimeEntry): TimeEntry {
   return {
     id: entry.id,
     projectId: entry.projectId,
-    startedAt: entry.startTime,
-    endedAt: entry.endTime ?? undefined,
-    notes: entry.description,
+    startTime: entry.startTime,
+    endTime: entry.endTime ?? undefined,
+    description: entry.description,
     createdAt: entry.createdAt,
     updatedAt: entry.updatedAt,
   };
@@ -87,9 +87,9 @@ export async function GET(req: NextRequest) {
 
     for (const group of groups) {
       for (const entry of group.entries) {
-        const start = entry.startedAt;
-        const end = entry.endedAt;
-        const task = entry.notes ?? '';
+        const start = entry.startTime;
+        const end = entry.endTime;
+        const task = entry.description ?? '';
         const startStr = formatDateTime(start);
         const endStr = end != null ? formatDateTime(end) : '';
         const duration = formatDurationMinutes(start, end ?? undefined);
